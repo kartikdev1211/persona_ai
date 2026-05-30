@@ -1,8 +1,12 @@
-// lib/features/splash/splash_screen.dart
+// lib/screens/splash/splash_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
+import 'package:persona_ai/screens/splash/bloc/bloc/splash_bloc.dart';
+import 'package:persona_ai/screens/splash/bloc/event/splash_event.dart';
+import 'package:persona_ai/screens/splash/bloc/state/splash_state.dart';
 import 'package:persona_ai/screens/splash/widget/splash_loader.dart';
 import 'package:persona_ai/screens/splash/widget/splash_logo.dart';
 import 'package:persona_ai/screens/splash/widget/splash_painter.dart';
@@ -58,27 +62,6 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-
-    _runSequence();
-  }
-
-  Future<void> _runSequence() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    await _logoCtrl.forward();
-    await Future.delayed(const Duration(milliseconds: 200));
-    await _loaderCtrl.forward();
-    await _doAppInit();
-    await _exitCtrl.forward();
-    if (!mounted) return;
-    _navigate();
-  }
-
-  Future<void> _doAppInit() async {
-    await Future.delayed(const Duration(milliseconds: 600));
-  }
-
-  void _navigate() {
-    Navigator.of(context).pushReplacementNamed('/onboarding');
   }
 
   @override
@@ -90,39 +73,57 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
+  Future<void> _onNavigate(String route) async {
+    await _logoCtrl.forward();
+    await Future.delayed(const Duration(milliseconds: 200));
+    await _loaderCtrl.forward();
+    await _exitCtrl.forward();
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed(route);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: Tween<double>(begin: 1, end: 0).animate(_exitCtrl),
-      child: Scaffold(
-        backgroundColor: AppColors.bg100,
-        body: AnimatedBuilder(
-          animation: _bgCtrl,
-          builder: (_, __) => Stack(
-            children: [
-              // ── Painter fills the entire screen ──
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: SplashPainter(progress: _bgCtrl.value),
-                ),
+    return BlocProvider(
+      create: (context) => SplashBloc()..add(AppStarted()),
+      child: BlocListener<SplashBloc, SplashState>(
+        listener: (context, state) {
+          if (state is SplashNavigateTo) {
+            _onNavigate(state.route);
+          }
+        },
+        child: FadeTransition(
+          opacity: Tween<double>(begin: 1, end: 0).animate(_exitCtrl),
+          child: Scaffold(
+            backgroundColor: AppColors.bg100,
+            body: AnimatedBuilder(
+              animation: _bgCtrl,
+              builder: (_, __) => Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: SplashPainter(progress: _bgCtrl.value),
+                    ),
+                  ),
+                  Center(
+                    child: SplashLogo(
+                      fadeAnim: _logoFade,
+                      slideAnim: _logoSlide,
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom:
+                        MediaQuery.of(context).padding.bottom + AppSpacing.xl3,
+                    child: SplashLoader(
+                      fadeAnim: _loaderFade,
+                      progressAnim: _loaderProgress,
+                    ),
+                  ),
+                ],
               ),
-
-              // ── Logo pinned to true center ────────
-              Center(
-                child: SplashLogo(fadeAnim: _logoFade, slideAnim: _logoSlide),
-              ),
-
-              // ── Loader pinned to bottom ───────────
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: MediaQuery.of(context).padding.bottom + AppSpacing.xl3,
-                child: SplashLoader(
-                  fadeAnim: _loaderFade,
-                  progressAnim: _loaderProgress,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

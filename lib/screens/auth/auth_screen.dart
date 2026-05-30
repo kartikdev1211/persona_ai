@@ -1,12 +1,17 @@
 // lib/screens/auth/auth_screen.dart
-// CHANGE: _submit() now pushes '/quiz' instead of '/persona-setup'
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:persona_ai/core/routes/app_routes.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
+import 'package:persona_ai/screens/auth/bloc/bloc/auth_bloc.dart';
+import 'package:persona_ai/screens/auth/bloc/event/auth_event.dart';
+import 'package:persona_ai/screens/auth/bloc/state/auth_state.dart';
 import 'package:persona_ai/screens/auth/widget/auth_form.dart';
-import 'auth_notifier.dart';
+import 'package:persona_ai/screens/auth/widget/submit_button.dart';
+import 'package:persona_ai/screens/auth/widget/tab_switcher.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -17,14 +22,11 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen>
     with SingleTickerProviderStateMixin {
-  final _notifier = AuthNotifier();
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
-
-  bool _loading = false;
 
   late final AnimationController _tabCtrl;
   late final Animation<double> _tabSlide;
@@ -37,27 +39,32 @@ class _AuthScreenState extends State<AuthScreen>
       duration: const Duration(milliseconds: 300),
     );
     _tabSlide = CurvedAnimation(parent: _tabCtrl, curve: Curves.easeInOutCubic);
-    _notifier.addListener(_onModeChange);
   }
 
-  void _onModeChange() {
-    _notifier.isSignup ? _tabCtrl.forward() : _tabCtrl.reverse();
+  void _onModeChange(AuthMode mode) {
+    mode == AuthMode.signup ? _tabCtrl.forward() : _tabCtrl.reverse();
   }
 
-  Future<void> _submit() async {
+  void _submit(BuildContext context, AuthState state) {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (!mounted) return;
-    setState(() => _loading = false);
-    // ── UPDATED: go to quiz, not persona-setup directly ──
-    Navigator.of(context).pushReplacementNamed('/quiz');
+
+    if (state.mode == AuthMode.login) {
+      context.read<AuthBloc>().add(
+        LoginRequested(email: _emailCtrl.text, password: _passwordCtrl.text),
+      );
+    } else {
+      context.read<AuthBloc>().add(
+        SignupRequested(
+          name: _nameCtrl.text,
+          email: _emailCtrl.text,
+          password: _passwordCtrl.text,
+        ),
+      );
+    }
   }
 
   @override
   void dispose() {
-    _notifier.removeListener(_onModeChange);
-    _notifier.dispose();
     _tabCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -68,90 +75,112 @@ class _AuthScreenState extends State<AuthScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg100,
-      body: Stack(
-        children: [
-          const _AuthGlow(),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screenH,
+    return BlocProvider(
+      create: (context) => AuthBloc(),
+      child: BlocConsumer<AuthBloc, AuthState>(
+        listenWhen: (prev, curr) =>
+            prev.mode != curr.mode || prev.status != curr.status,
+        listener: (context, state) {
+          _onModeChange(state.mode);
+          if (state.status == AuthStatus.success) {
+            Navigator.of(context).pushReplacementNamed(AppRoutes.quiz);
+          }
+          if (state.status == AuthStatus.failure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage ?? 'Authentication failed'),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: AppSpacing.xl2),
-                  _MiniLogo(),
-                  const SizedBox(height: AppSpacing.xl3),
-                  _TabSwitcher(notifier: _notifier, slideAnim: _tabSlide),
-                  const SizedBox(height: AppSpacing.xl3),
-                  AuthForm(
-                    notifier: _notifier,
-                    formKey: _formKey,
-                    emailCtrl: _emailCtrl,
-                    passwordCtrl: _passwordCtrl,
-                    nameCtrl: _nameCtrl,
-                    confirmCtrl: _confirmCtrl,
-                  ),
-                  const SizedBox(height: AppSpacing.xl2),
-                  ValueListenableBuilder<AuthMode>(
-                    valueListenable: _notifier,
-                    builder: (_, mode, __) => _SubmitButton(
-                      label: mode == AuthMode.login
-                          ? 'Sign In'
-                          : 'Create Account',
-                      loading: _loading,
-                      onTap: _submit,
+            );
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+            backgroundColor: AppColors.bg100,
+            body: Stack(
+              children: [
+                const _AuthGlow(),
+                SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.screenH,
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl2),
-                  _OrDivider(),
-                  const SizedBox(height: AppSpacing.xl2),
-                  _SocialButtons(),
-                  const SizedBox(height: AppSpacing.xl3),
-                  ValueListenableBuilder<AuthMode>(
-                    valueListenable: _notifier,
-                    builder: (_, mode, __) => Center(
-                      child: GestureDetector(
-                        onTap: _notifier.toggleMode,
-                        child: RichText(
-                          text: TextSpan(
-                            style: AppTextStyles.bodyMD,
-                            children: [
-                              TextSpan(
-                                text: mode == AuthMode.login
-                                    ? "Don't have an account? "
-                                    : 'Already have an account? ',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: AppSpacing.xl2),
+                        _MiniLogo(),
+                        const SizedBox(height: AppSpacing.xl3),
+                        TabSwitcher(
+                          mode: state.mode,
+                          slideAnim: _tabSlide,
+                          onToggle: () =>
+                              context.read<AuthBloc>().add(ToggleMode()),
+                        ),
+                        const SizedBox(height: AppSpacing.xl3),
+                        AuthForm(
+                          mode: state.mode,
+                          formKey: _formKey,
+                          emailCtrl: _emailCtrl,
+                          passwordCtrl: _passwordCtrl,
+                          nameCtrl: _nameCtrl,
+                          confirmCtrl: _confirmCtrl,
+                        ),
+                        const SizedBox(height: AppSpacing.xl2),
+                        SubmitButton(
+                          label: state.mode == AuthMode.login
+                              ? 'Sign In'
+                              : 'Create Account',
+                          loading: state.status == AuthStatus.loading,
+                          onTap: () => _submit(context, state),
+                        ),
+                        const SizedBox(height: AppSpacing.xl2),
+                        _OrDivider(),
+                        const SizedBox(height: AppSpacing.xl2),
+                        _SocialButtons(),
+                        const SizedBox(height: AppSpacing.xl3),
+                        Center(
+                          child: GestureDetector(
+                            onTap: () =>
+                                context.read<AuthBloc>().add(ToggleMode()),
+                            child: RichText(
+                              text: TextSpan(
+                                style: AppTextStyles.bodyMD,
+                                children: [
+                                  TextSpan(
+                                    text: state.mode == AuthMode.login
+                                        ? "Don't have an account? "
+                                        : 'Already have an account? ',
+                                  ),
+                                  TextSpan(
+                                    text: state.mode == AuthMode.login
+                                        ? 'Sign Up'
+                                        : 'Sign In',
+                                    style: AppTextStyles.bodyMD.copyWith(
+                                      color: AppColors.neonBlue,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              TextSpan(
-                                text: mode == AuthMode.login
-                                    ? 'Sign Up'
-                                    : 'Sign In',
-                                style: AppTextStyles.bodyMD.copyWith(
-                                  color: AppColors.neonBlue,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: AppSpacing.xl3),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xl3),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
 // ────────────────────────────────────────────
-// Sub-widgets (unchanged)
+// Sub-widgets
 // ────────────────────────────────────────────
 
 class _AuthGlow extends StatelessWidget {
@@ -218,186 +247,6 @@ class _MiniLogo extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _TabSwitcher extends StatelessWidget {
-  final AuthNotifier notifier;
-  final Animation<double> slideAnim;
-
-  const _TabSwitcher({required this.notifier, required this.slideAnim});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.bg300,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.glassBorder),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final slotW = (constraints.maxWidth - 8) / 2;
-          return Stack(
-            children: [
-              AnimatedBuilder(
-                animation: slideAnim,
-                builder: (_, __) => Transform.translate(
-                  offset: Offset(slideAnim.value * slotW, 0),
-                  child: Container(
-                    width: slotW,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: AppColors.primaryGradient,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.neonBlue.withOpacity(0.3),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        if (notifier.isSignup) notifier.toggleMode();
-                      },
-                      child: ValueListenableBuilder<AuthMode>(
-                        valueListenable: notifier,
-                        builder: (_, mode, __) => Center(
-                          child: Text(
-                            'Sign In',
-                            style: AppTextStyles.titleSM.copyWith(
-                              color: mode == AuthMode.login
-                                  ? AppColors.textInverse
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        if (notifier.isLogin) notifier.toggleMode();
-                      },
-                      child: ValueListenableBuilder<AuthMode>(
-                        valueListenable: notifier,
-                        builder: (_, mode, __) => Center(
-                          child: Text(
-                            'Sign Up',
-                            style: AppTextStyles.titleSM.copyWith(
-                              color: mode == AuthMode.signup
-                                  ? AppColors.textInverse
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _SubmitButton extends StatefulWidget {
-  final String label;
-  final bool loading;
-  final VoidCallback onTap;
-
-  const _SubmitButton({
-    required this.label,
-    required this.loading,
-    required this.onTap,
-  });
-
-  @override
-  State<_SubmitButton> createState() => _SubmitButtonState();
-}
-
-class _SubmitButtonState extends State<_SubmitButton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 120),
-      lowerBound: 0.97,
-      upperBound: 1.0,
-    )..value = 1.0;
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _ctrl.reverse(),
-      onTapUp: (_) {
-        _ctrl.forward();
-        widget.onTap();
-      },
-      onTapCancel: () => _ctrl.forward(),
-      child: ScaleTransition(
-        scale: _ctrl,
-        child: Container(
-          height: 54,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: AppColors.primaryGradient),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.neonBlue.withOpacity(0.35),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Center(
-            child: widget.loading
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(AppColors.textInverse),
-                    ),
-                  )
-                : Text(
-                    widget.label,
-                    style: AppTextStyles.titleMD.copyWith(
-                      color: AppColors.textInverse,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-          ),
-        ),
-      ),
     );
   }
 }

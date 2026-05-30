@@ -1,15 +1,16 @@
 // lib/screens/persona_setup/widget/setup_name_step.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
-import '../persona_setup_notifier.dart';
+import '../bloc/bloc/persona_setup_bloc.dart';
+import '../bloc/event/persona_setup_event.dart';
+import '../bloc/state/persona_setup_state.dart';
 
 class SetupNameStep extends StatefulWidget {
-  final PersonaSetupNotifier notifier;
-
-  const SetupNameStep({super.key, required this.notifier});
+  const SetupNameStep({super.key});
 
   @override
   State<SetupNameStep> createState() => _SetupNameStepState();
@@ -22,11 +23,10 @@ class _SetupNameStepState extends State<SetupNameStep> {
   @override
   void initState() {
     super.initState();
-    _ctrl = TextEditingController(text: widget.notifier.userName);
+    final bloc = context.read<PersonaSetupBloc>();
+    _ctrl = TextEditingController(text: bloc.state.userName);
     _ctrl.addListener(() {
-      widget.notifier.userName = _ctrl.text;
-      // rebuild parent CTA via notifier
-      widget.notifier.notifyListeners();
+      bloc.add(NameChanged(_ctrl.text));
     });
   }
 
@@ -38,72 +38,80 @@ class _SetupNameStepState extends State<SetupNameStep> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        StepHeading(
-          tag: 'STEP 1 OF 4',
-          title: "What's your",
-          accent: 'name?',
-          subtitle: 'This is how your AI coach will address you.',
-        ),
-        const SizedBox(height: AppSpacing.xl3),
-
-        Focus(
-          onFocusChange: (f) => setState(() => _focused = f),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              boxShadow: _focused
-                  ? [
-                      BoxShadow(
-                        color: AppColors.neonBlue.withOpacity(0.15),
-                        blurRadius: 20,
-                      ),
-                    ]
-                  : [],
+    return BlocBuilder<PersonaSetupBloc, PersonaSetupState>(
+      buildWhen: (prev, curr) =>
+          false, // Only build once to prevent cursor jump
+      builder: (context, state) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const StepHeading(
+              tag: 'STEP 1 OF 4',
+              title: "What's your",
+              accent: 'name?',
+              subtitle: 'This is how your AI coach will address you.',
             ),
-            child: TextFormField(
-              controller: _ctrl,
-              autofocus: true,
-              textCapitalization: TextCapitalization.words,
-              style: AppTextStyles.titleLG.copyWith(
-                color: AppColors.textPrimary,
-              ),
-              decoration: InputDecoration(
-                hintText: 'e.g. Alex',
-                prefixIcon: Icon(
-                  Icons.person_outline_rounded,
-                  size: 18,
-                  color: _focused ? AppColors.neonBlue : AppColors.textDisabled,
+            const SizedBox(height: AppSpacing.xl3),
+
+            Focus(
+              onFocusChange: (f) => setState(() => _focused = f),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  boxShadow: _focused
+                      ? [
+                          BoxShadow(
+                            color: AppColors.neonBlue.withOpacity(0.15),
+                            blurRadius: 20,
+                          ),
+                        ]
+                      : [],
+                ),
+                child: TextFormField(
+                  controller: _ctrl,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.words,
+                  style: AppTextStyles.titleLG.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'e.g. Alex',
+                    prefixIcon: Icon(
+                      Icons.person_outline_rounded,
+                      size: 18,
+                      color: _focused
+                          ? AppColors.neonBlue
+                          : AppColors.textDisabled,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
 
-        const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.lg),
 
-        // Character counter hint
-        ValueListenableBuilder(
-          valueListenable: _ctrl,
-          builder: (_, __, ___) => AnimatedOpacity(
-            duration: const Duration(milliseconds: 200),
-            opacity: _ctrl.text.isNotEmpty ? 1.0 : 0.0,
-            child: Text(
-              _ctrl.text.trim().length < 2
-                  ? 'At least 2 characters'
-                  : 'Looking good, ${_ctrl.text.trim().split(' ').first}!',
-              style: AppTextStyles.caption.copyWith(
-                color: _ctrl.text.trim().length < 2
-                    ? AppColors.textDisabled
-                    : AppColors.neonGreen,
+            // Character counter hint
+            ValueListenableBuilder(
+              valueListenable: _ctrl,
+              builder: (_, __, ___) => AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: _ctrl.text.isNotEmpty ? 1.0 : 0.0,
+                child: Text(
+                  _ctrl.text.trim().length < 2
+                      ? 'At least 2 characters'
+                      : 'Looking good, ${_ctrl.text.trim().split(' ').first}!',
+                  style: AppTextStyles.caption.copyWith(
+                    color: _ctrl.text.trim().length < 2
+                        ? AppColors.textDisabled
+                        : AppColors.neonGreen,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
@@ -116,6 +124,7 @@ class StepHeading extends StatelessWidget {
   final String subtitle;
 
   const StepHeading({
+    super.key,
     required this.tag,
     required this.title,
     required this.accent,

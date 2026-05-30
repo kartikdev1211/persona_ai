@@ -8,6 +8,26 @@ import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
 
 class AppTheme {
+  static ThemeData get light {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: Colors.white,
+      colorScheme: const ColorScheme.light(
+        primary: AppColors.neonBlue,
+        secondary: AppColors.neonPurple,
+        tertiary: AppColors.neonGreen,
+        error: AppColors.error,
+      ),
+      textTheme: TextTheme(
+        displayLarge: AppTextStyles.displayXL.copyWith(color: Colors.black),
+        displayMedium: AppTextStyles.displayLG.copyWith(color: Colors.black),
+        displaySmall: AppTextStyles.displayMD.copyWith(color: Colors.black),
+        bodyMedium: AppTextStyles.bodyMD.copyWith(color: Colors.black87),
+      ),
+    );
+  }
+
   static ThemeData get dark {
     return ThemeData(
       useMaterial3: true,

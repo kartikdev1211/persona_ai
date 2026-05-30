@@ -1,10 +1,14 @@
 // lib/screens/persona_setup/persona_setup_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:persona_ai/core/routes/app_routes.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
-import 'persona_setup_notifier.dart';
+import 'bloc/bloc/persona_setup_bloc.dart';
+import 'bloc/event/persona_setup_event.dart';
+import 'bloc/state/persona_setup_state.dart';
 import 'widget/setup_avatar_step.dart';
 import 'widget/setup_confidence_step.dart';
 import 'widget/setup_focus_step.dart';
@@ -19,12 +23,9 @@ class PersonaSetupScreen extends StatefulWidget {
 
 class _PersonaSetupScreenState extends State<PersonaSetupScreen>
     with SingleTickerProviderStateMixin {
-  final _notifier = PersonaSetupNotifier();
   final _pageCtrl = PageController();
-  bool _loading = false;
 
   late final AnimationController _glowCtrl;
-  late final Animation<double> _glowAnim;
 
   @override
   void initState() {
@@ -33,50 +34,28 @@ class _PersonaSetupScreenState extends State<PersonaSetupScreen>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     )..value = 1.0;
-    _glowAnim = CurvedAnimation(parent: _glowCtrl, curve: Curves.easeOut);
-    _notifier.addListener(_onStepChange);
   }
 
-  void _onStepChange() {
+  void _onStepChange(int index) {
     _pageCtrl.animateToPage(
-      _notifier.stepIndex,
+      index,
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOutCubic,
     );
     // Pulse glow on step change
     _glowCtrl.forward(from: 0);
-    setState(() {});
-  }
-
-  Future<void> _finish() async {
-    setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 1200)); // replace w/ save
-    if (!mounted) return;
-    setState(() => _loading = false);
-    Navigator.of(context).pushReplacementNamed('/persona-report');
-  }
-
-  void _onNext() {
-    if (!_notifier.canProceed()) return;
-    if (_notifier.isLast) {
-      _finish();
-    } else {
-      _notifier.next();
-    }
   }
 
   @override
   void dispose() {
-    _notifier.removeListener(_onStepChange);
-    _notifier.dispose();
     _pageCtrl.dispose();
     _glowCtrl.dispose();
     super.dispose();
   }
 
   // Glow color shifts per step
-  Color get _accentColor {
-    switch (_notifier.value) {
+  Color _getAccentColor(SetupStep step) {
+    switch (step) {
       case SetupStep.name:
         return AppColors.neonBlue;
       case SetupStep.avatar:
@@ -90,85 +69,113 @@ class _PersonaSetupScreenState extends State<PersonaSetupScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg100,
-      body: Stack(
-        children: [
-          // ── Ambient glow (shifts per step) ─────────────
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.topRight,
-                radius: 0.8,
-                colors: [_accentColor.withOpacity(0.08), Colors.transparent],
-              ),
-            ),
-          ),
+    return BlocProvider(
+      create: (context) => PersonaSetupBloc(),
+      child: BlocConsumer<PersonaSetupBloc, PersonaSetupState>(
+        listenWhen: (prev, curr) =>
+            prev.currentStep != curr.currentStep || curr.isCompleted,
+        listener: (context, state) {
+          if (state.isCompleted) {
+            Navigator.of(context).pushReplacementNamed(AppRoutes.personaReport);
+          } else {
+            _onStepChange(state.stepIndex);
+          }
+        },
+        builder: (context, state) {
+          final accentColor = _getAccentColor(state.currentStep);
 
-          SafeArea(
-            child: Column(
+          return Scaffold(
+            backgroundColor: AppColors.bg100,
+            body: Stack(
               children: [
-                // ── Top bar ────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.screenH,
-                    vertical: AppSpacing.lg,
-                  ),
-                  child: _TopBar(notifier: _notifier),
-                ),
-
-                // ── Progress bar ───────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.screenH,
-                  ),
-                  child: _ProgressBar(notifier: _notifier, color: _accentColor),
-                ),
-
-                const SizedBox(height: AppSpacing.xl3),
-
-                // ── Step pages ─────────────────────────
-                Expanded(
-                  child: PageView(
-                    controller: _pageCtrl,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _StepPage(child: SetupNameStep(notifier: _notifier)),
-                      _StepPage(child: SetupAvatarStep(notifier: _notifier)),
-                      _StepPage(
-                        child: SetupConfidenceStep(notifier: _notifier),
-                      ),
-                      _StepPage(child: SetupFocusStep(notifier: _notifier)),
-                    ],
-                  ),
-                ),
-
-                // ── Bottom CTA ─────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.screenH,
-                    AppSpacing.lg,
-                    AppSpacing.screenH,
-                    AppSpacing.xl2,
-                  ),
-                  child: ValueListenableBuilder<SetupStep>(
-                    valueListenable: _notifier,
-                    builder: (_, __, ___) => _CtaButton(
-                      label: _notifier.isLast ? 'Build My Persona' : 'Continue',
-                      isLast: _notifier.isLast,
-                      loading: _loading,
-                      enabled: _notifier.canProceed(),
-                      accentColor: _accentColor,
-                      onTap: _onNext,
+                // ── Ambient glow (shifts per step) ─────────────
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment.topRight,
+                      radius: 0.8,
+                      colors: [
+                        accentColor.withOpacity(0.08),
+                        Colors.transparent,
+                      ],
                     ),
+                  ),
+                ),
+
+                SafeArea(
+                  child: Column(
+                    children: [
+                      // ── Top bar ────────────────────────────
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.screenH,
+                          vertical: AppSpacing.lg,
+                        ),
+                        child: _TopBar(state: state),
+                      ),
+
+                      // ── Progress bar ───────────────────────
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.screenH,
+                        ),
+                        child: _ProgressBar(state: state, color: accentColor),
+                      ),
+
+                      const SizedBox(height: AppSpacing.xl3),
+
+                      // ── Step pages ─────────────────────────
+                      Expanded(
+                        child: PageView(
+                          controller: _pageCtrl,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: const [
+                            _StepPage(child: SetupNameStep()),
+                            _StepPage(child: SetupAvatarStep()),
+                            _StepPage(child: SetupConfidenceStep()),
+                            _StepPage(child: SetupFocusStep()),
+                          ],
+                        ),
+                      ),
+
+                      // ── Bottom CTA ─────────────────────────
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.screenH,
+                          AppSpacing.lg,
+                          AppSpacing.screenH,
+                          AppSpacing.xl2,
+                        ),
+                        child: _CtaButton(
+                          label: state.isLast ? 'Build My Persona' : 'Continue',
+                          isLast: state.isLast,
+                          loading: state.isLoading,
+                          enabled: state.canProceed(),
+                          accentColor: accentColor,
+                          onTap: () {
+                            if (state.canProceed()) {
+                              if (state.isLast) {
+                                context.read<PersonaSetupBloc>().add(
+                                  FinishSetup(),
+                                );
+                              } else {
+                                context.read<PersonaSetupBloc>().add(
+                                  NextStep(),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -179,34 +186,33 @@ class _PersonaSetupScreenState extends State<PersonaSetupScreen>
 // ─────────────────────────────────────────────
 
 class _TopBar extends StatelessWidget {
-  final PersonaSetupNotifier notifier;
-  const _TopBar({required this.notifier});
+  final PersonaSetupState state;
+  const _TopBar({required this.state});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         // Back button (hidden on first step)
-        ValueListenableBuilder<SetupStep>(
-          valueListenable: notifier,
-          builder: (_, __, ___) => AnimatedOpacity(
-            duration: const Duration(milliseconds: 200),
-            opacity: notifier.isFirst ? 0.0 : 1.0,
-            child: GestureDetector(
-              onTap: notifier.isFirst ? null : notifier.back,
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: AppColors.bg300,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: AppColors.glassBorder),
-                ),
-                child: const Icon(
-                  Icons.arrow_back_rounded,
-                  color: AppColors.textSecondary,
-                  size: 18,
-                ),
+        AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: state.isFirst ? 0.0 : 1.0,
+          child: GestureDetector(
+            onTap: state.isFirst
+                ? null
+                : () => context.read<PersonaSetupBloc>().add(PreviousStep()),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.bg300,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: AppColors.glassBorder),
+              ),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppColors.textSecondary,
+                size: 18,
               ),
             ),
           ),
@@ -226,19 +232,16 @@ class _TopBar extends StatelessWidget {
         const Spacer(),
 
         // Step counter
-        ValueListenableBuilder<SetupStep>(
-          valueListenable: notifier,
-          builder: (_, __, ___) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.bg300,
-              borderRadius: BorderRadius.circular(AppRadius.full),
-              border: Border.all(color: AppColors.glassBorder),
-            ),
-            child: Text(
-              '${notifier.stepIndex + 1} / ${notifier.totalSteps}',
-              style: AppTextStyles.labelSM,
-            ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.bg300,
+            borderRadius: BorderRadius.circular(AppRadius.full),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          child: Text(
+            '${state.stepIndex + 1} / ${state.totalSteps}',
+            style: AppTextStyles.labelSM,
           ),
         ),
       ],
@@ -247,38 +250,33 @@ class _TopBar extends StatelessWidget {
 }
 
 class _ProgressBar extends StatelessWidget {
-  final PersonaSetupNotifier notifier;
+  final PersonaSetupState state;
   final Color color;
-  const _ProgressBar({required this.notifier, required this.color});
+  const _ProgressBar({required this.state, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<SetupStep>(
-      valueListenable: notifier,
-      builder: (_, __, ___) {
-        final progress = (notifier.stepIndex + 1) / notifier.totalSteps;
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          child: SizedBox(
-            height: 4,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: progress),
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOutCubic,
-              builder: (_, v, __) => LinearProgressIndicator(
-                value: v,
-                backgroundColor: AppColors.bg400,
-                valueColor: AlwaysStoppedAnimation(color),
-              ),
-            ),
+    final progress = (state.stepIndex + 1) / state.totalSteps;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.full),
+      child: SizedBox(
+        height: 4,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: progress),
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOutCubic,
+          builder: (_, v, __) => LinearProgressIndicator(
+            value: v,
+            backgroundColor: AppColors.bg400,
+            valueColor: AlwaysStoppedAnimation(color),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
-// Wraps each page with horizontal padding + fade-slide entrance
+// Wraps each page with horizontal padding
 class _StepPage extends StatelessWidget {
   final Widget child;
   const _StepPage({required this.child});

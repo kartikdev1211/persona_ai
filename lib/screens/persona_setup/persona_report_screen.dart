@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:persona_ai/common_widget/glass_card.dart';
 import 'package:persona_ai/common_widget/progress_ring.dart';
 import 'package:persona_ai/common_widget/gradient_button.dart';
+import 'package:persona_ai/core/routes/app_routes.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
@@ -217,8 +218,9 @@ class PersonaReportScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(AppSpacing.screenH),
                     child: GradientButton(
                       label: 'Begin My Transformation',
-                      onTap: () =>
-                          Navigator.of(context).pushReplacementNamed('/home'),
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pushReplacementNamed(AppRoutes.home),
                     ),
                   ),
                 ),
@@ -252,26 +254,33 @@ class _ScoreItem extends StatelessWidget {
       children: [
         ProgressRing(
           value: score,
-          size: 90,
+          size: 96,
+          strokeWidth: 7,
           color: color,
           center: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 '${(score * 100).toInt()}%',
-                style: AppTextStyles.displayMD.copyWith(fontSize: 20),
+                style: AppTextStyles.displayMD.copyWith(
+                  fontSize: 22,
+                  height: 1.0,
+                ),
               ),
+              const SizedBox(height: 2),
               Text(
                 'SCORE',
                 style: AppTextStyles.caption.copyWith(
                   fontSize: 8,
-                  letterSpacing: 1,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.bold,
+                  color: color.withOpacity(0.7),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Text(label, style: AppTextStyles.labelSM),
       ],
     );

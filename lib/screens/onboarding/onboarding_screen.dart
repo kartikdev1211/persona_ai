@@ -1,10 +1,13 @@
 // lib/screens/onboarding/onboarding_screen.dart
-// CHANGES: removed Goals page, _totalPages = 3, _onSkip goes to auth directly,
-//          removed _selectedGoals state, removed onboarding_goals import
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:persona_ai/core/routes/app_routes.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/models/onboarding/onboarding_model.dart';
+import 'package:persona_ai/screens/onboarding/bloc/bloc/onboarding_bloc.dart';
+import 'package:persona_ai/screens/onboarding/bloc/event/onboarding_event.dart';
+import 'package:persona_ai/screens/onboarding/bloc/state/onboarding_state.dart';
 import 'package:persona_ai/screens/onboarding/widget/onboarding_navbar.dart';
 import 'package:persona_ai/screens/onboarding/widget/onboarding_slides.dart';
 
@@ -17,29 +20,9 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageCtrl = PageController();
-  int _currentPage = 0;
 
-  // 3 slides only — goals page removed
+  // 3 slides only
   static const int _totalPages = 3;
-
-  List<Color> get _activeGradient => kSlides[_currentPage].gradient;
-
-  void _onNext() {
-    if (_currentPage < _totalPages - 1) {
-      _pageCtrl.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOutCubic,
-      );
-    } else {
-      _navigateToAuth();
-    }
-  }
-
-  void _onSkip() => _navigateToAuth();
-
-  void _navigateToAuth() {
-    Navigator.of(context).pushReplacementNamed('/auth');
-  }
 
   @override
   void dispose() {
@@ -47,43 +30,76 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
+  void _onNext(BuildContext context, int currentPage) {
+    if (currentPage < _totalPages - 1) {
+      _pageCtrl.nextPage(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
+      );
+    } else {
+      context.read<OnboardingBloc>().add(CompleteOnboarding());
+    }
+  }
+
+  void _onSkip(BuildContext context) {
+    context.read<OnboardingBloc>().add(CompleteOnboarding());
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg100,
-      body: Stack(
-        children: [
-          // Ambient glow — shifts color per slide
-          _AmbientGlow(gradient: _activeGradient),
+    return BlocProvider(
+      create: (context) => OnboardingBloc(),
+      child: BlocListener<OnboardingBloc, OnboardingState>(
+        listenWhen: (prev, curr) => curr.isCompleted,
+        listener: (context, state) {
+          Navigator.of(context).pushReplacementNamed(AppRoutes.auth);
+        },
+        child: BlocBuilder<OnboardingBloc, OnboardingState>(
+          builder: (context, state) {
+            final activeGradient = kSlides[state.currentPage].gradient;
 
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                Expanded(
-                  child: PageView(
-                    controller: _pageCtrl,
-                    onPageChanged: (i) => setState(() => _currentPage = i),
-                    children: List.generate(
-                      kSlides.length,
-                      (i) =>
-                          Center(child: OnboardingSlideView(slide: kSlides[i])),
+            return Scaffold(
+              backgroundColor: AppColors.bg100,
+              body: Stack(
+                children: [
+                  // Ambient glow — shifts color per slide
+                  _AmbientGlow(gradient: activeGradient),
+
+                  SafeArea(
+                    bottom: false,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: PageView(
+                            controller: _pageCtrl,
+                            onPageChanged: (i) => context
+                                .read<OnboardingBloc>()
+                                .add(PageChanged(i)),
+                            children: List.generate(
+                              kSlides.length,
+                              (i) => Center(
+                                child: OnboardingSlideView(slide: kSlides[i]),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Nav bar
+                        OnboardingNavBar(
+                          currentPage: state.currentPage,
+                          totalPages: _totalPages,
+                          gradient: activeGradient,
+                          onNext: () => _onNext(context, state.currentPage),
+                          onSkip: () => _onSkip(context),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-
-                // Nav bar — always canProceed (no goals gate)
-                OnboardingNavBar(
-                  currentPage: _currentPage,
-                  totalPages: _totalPages,
-                  gradient: _activeGradient,
-                  onNext: _onNext,
-                  onSkip: _onSkip,
-                ),
-              ],
-            ),
-          ),
-        ],
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

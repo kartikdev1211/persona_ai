@@ -1,10 +1,13 @@
 // lib/screens/persona_setup/widget/setup_avatar_step.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
-import '../persona_setup_notifier.dart';
+import '../bloc/bloc/persona_setup_bloc.dart';
+import '../bloc/event/persona_setup_event.dart';
+import '../bloc/state/persona_setup_state.dart';
 import 'setup_name_step.dart';
 
 // Each avatar is an emoji + gradient combo
@@ -20,103 +23,89 @@ const _kAvatars = [
   (emoji: '💎', colors: AppColors.primaryGradient),
 ];
 
-class SetupAvatarStep extends StatefulWidget {
-  final PersonaSetupNotifier notifier;
-
-  const SetupAvatarStep({super.key, required this.notifier});
-
-  @override
-  State<SetupAvatarStep> createState() => _SetupAvatarStepState();
-}
-
-class _SetupAvatarStepState extends State<SetupAvatarStep> {
-  int _selected = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = widget.notifier.avatarIndex;
-  }
-
-  void _select(int i) {
-    setState(() => _selected = i);
-    widget.notifier.avatarIndex = i;
-  }
+class SetupAvatarStep extends StatelessWidget {
+  const SetupAvatarStep({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final firstName = widget.notifier.userName.trim().split(' ').first;
+    return BlocBuilder<PersonaSetupBloc, PersonaSetupState>(
+      builder: (context, state) {
+        final firstName = state.userName.trim().split(' ').first;
+        final selected = state.avatarIndex;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        StepHeading(
-          tag: 'STEP 2 OF 4',
-          title: 'Choose your',
-          accent: 'avatar',
-          subtitle: firstName.isNotEmpty
-              ? 'Pick what represents you, $firstName.'
-              : 'Pick what represents you.',
-        ),
-        const SizedBox(height: AppSpacing.xl3),
-
-        // Selected preview
-        Center(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeOutCubic,
-            transitionBuilder: (child, anim) => ScaleTransition(
-              scale: anim,
-              child: FadeTransition(opacity: anim, child: child),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            StepHeading(
+              tag: 'STEP 2 OF 4',
+              title: 'Choose your',
+              accent: 'avatar',
+              subtitle: firstName.isNotEmpty
+                  ? 'Pick what represents you, $firstName.'
+                  : 'Pick what represents you.',
             ),
-            child: _AvatarPreview(
-              key: ValueKey(_selected),
-              emoji: _kAvatars[_selected].emoji,
-              colors: _kAvatars[_selected].colors,
-            ),
-          ),
-        ),
+            const SizedBox(height: AppSpacing.xl3),
 
-        const SizedBox(height: AppSpacing.xl2),
-
-        // Grid picker
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: AppSpacing.md,
-            crossAxisSpacing: AppSpacing.md,
-            childAspectRatio: 1,
-          ),
-          itemCount: _kAvatars.length,
-          itemBuilder: (_, i) => GestureDetector(
-            onTap: () => _select(i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              decoration: BoxDecoration(
-                color: _selected == i
-                    ? AppColors.neonBlue.withOpacity(0.1)
-                    : AppColors.bg300,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(
-                  color: _selected == i
-                      ? AppColors.neonBlue
-                      : AppColors.glassBorder,
-                  width: _selected == i ? 1.5 : 1,
+            // Selected preview
+            Center(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                switchInCurve: Curves.easeOutCubic,
+                transitionBuilder: (child, anim) => ScaleTransition(
+                  scale: anim,
+                  child: FadeTransition(opacity: anim, child: child),
                 ),
-              ),
-              child: Center(
-                child: Text(
-                  _kAvatars[i].emoji,
-                  style: const TextStyle(fontSize: 32),
+                child: _AvatarPreview(
+                  key: ValueKey(selected),
+                  emoji: _kAvatars[selected].emoji,
+                  colors: _kAvatars[selected].colors,
                 ),
               ),
             ),
-          ),
-        ),
-      ],
+
+            const SizedBox(height: AppSpacing.xl2),
+
+            // Grid picker
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: AppSpacing.md,
+                crossAxisSpacing: AppSpacing.md,
+                childAspectRatio: 1,
+              ),
+              itemCount: _kAvatars.length,
+              itemBuilder: (_, i) => GestureDetector(
+                onTap: () =>
+                    context.read<PersonaSetupBloc>().add(AvatarChanged(i)),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  decoration: BoxDecoration(
+                    color: selected == i
+                        ? AppColors.neonBlue.withOpacity(0.1)
+                        : AppColors.bg300,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(
+                      color: selected == i
+                          ? AppColors.neonBlue
+                          : AppColors.glassBorder,
+                      width: selected == i ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _kAvatars[i].emoji,
+                      style: const TextStyle(fontSize: 32),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

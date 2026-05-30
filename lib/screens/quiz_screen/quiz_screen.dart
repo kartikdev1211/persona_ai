@@ -1,10 +1,15 @@
-// lib/screens/quiz/quiz_screen.dart
+// lib/screens/quiz_screen/quiz_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:persona_ai/core/routes/app_routes.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
 import 'package:persona_ai/models/quiz/quiz_model.dart';
+import 'package:persona_ai/screens/quiz_screen/bloc/bloc/quiz_bloc.dart';
+import 'package:persona_ai/screens/quiz_screen/bloc/event/quiz_event.dart';
+import 'package:persona_ai/screens/quiz_screen/bloc/state/quiz_state.dart';
 import 'widget/quiz_option_card.dart';
 
 class QuizScreen extends StatefulWidget {
@@ -16,9 +21,6 @@ class QuizScreen extends StatefulWidget {
 
 class _QuizScreenState extends State<QuizScreen>
     with SingleTickerProviderStateMixin {
-  int _currentIndex = 0;
-  final List<int?> _answers = List.filled(kQuizQuestions.length, null);
-
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
@@ -43,227 +45,240 @@ class _QuizScreenState extends State<QuizScreen>
     super.dispose();
   }
 
-  QuizQuestion get _current => kQuizQuestions[_currentIndex];
-  bool get _isLast => _currentIndex == kQuizQuestions.length - 1;
-  bool get _canProceed => _answers[_currentIndex] != null;
-
-  void _selectOption(int optionIndex) {
-    setState(() => _answers[_currentIndex] = optionIndex);
-  }
-
-  Future<void> _next() async {
-    if (!_canProceed) return;
-
-    if (_isLast) {
-      Navigator.of(context).pushReplacementNamed('/persona-setup');
-      return;
-    }
-
-    // Animate out
+  Future<void> _handlePageTransition(VoidCallback action) async {
     await _fadeCtrl.reverse();
-    setState(() => _currentIndex++);
-    // Animate in
+    action();
     _fadeCtrl.forward();
   }
 
   @override
   Widget build(BuildContext context) {
-    final progress = (_currentIndex + 1) / kQuizQuestions.length;
+    return BlocProvider(
+      create: (context) => QuizBloc(),
+      child: BlocConsumer<QuizBloc, QuizState>(
+        listenWhen: (prev, curr) =>
+            prev.currentIndex != curr.currentIndex || curr.isCompleted,
+        listener: (context, state) {
+          if (state.isCompleted) {
+            Navigator.of(context).pushReplacementNamed(AppRoutes.personaSetup);
+          }
+        },
+        builder: (context, state) {
+          final current = kQuizQuestions[state.currentIndex];
+          final progress = (state.currentIndex + 1) / kQuizQuestions.length;
 
-    return Scaffold(
-      backgroundColor: AppColors.bg100,
-      body: Stack(
-        children: [
-          // Ambient glow — shifts subtly per question
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.topLeft,
-                radius: 0.9,
-                colors: [
-                  AppColors.neonBlue.withOpacity(0.06),
-                  Colors.transparent,
-                ],
-              ),
-            ),
-          ),
-
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          return Scaffold(
+            backgroundColor: AppColors.bg100,
+            body: Stack(
               children: [
-                // ── Top bar ─────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.screenH,
-                    AppSpacing.lg,
-                    AppSpacing.screenH,
-                    0,
+                // Ambient glow
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment.topLeft,
+                      radius: 0.9,
+                      colors: [
+                        AppColors.neonBlue.withOpacity(0.06),
+                        Colors.transparent,
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ),
+
+                SafeArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Back button
-                      GestureDetector(
-                        onTap: _currentIndex > 0
-                            ? () async {
-                                await _fadeCtrl.reverse();
-                                setState(() => _currentIndex--);
-                                _fadeCtrl.forward();
-                              }
-                            : null,
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 200),
-                          opacity: _currentIndex > 0 ? 1.0 : 0.0,
-                          child: Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: AppColors.bg300,
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              border: Border.all(color: AppColors.glassBorder),
+                      // ── Top bar ─────────────────────────────
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.screenH,
+                          AppSpacing.lg,
+                          AppSpacing.screenH,
+                          0,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Back button
+                            GestureDetector(
+                              onTap: state.currentIndex > 0
+                                  ? () => _handlePageTransition(() {
+                                      context.read<QuizBloc>().add(
+                                        PreviousQuestion(),
+                                      );
+                                    })
+                                  : null,
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 200),
+                                opacity: state.currentIndex > 0 ? 1.0 : 0.0,
+                                child: Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.bg300,
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.sm,
+                                    ),
+                                    border: Border.all(
+                                      color: AppColors.glassBorder,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.arrow_back_rounded,
+                                    color: AppColors.textSecondary,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.arrow_back_rounded,
-                              color: AppColors.textSecondary,
-                              size: 18,
+
+                            // Step counter pill
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.bg300,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.full,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.glassBorder,
+                                ),
+                              ),
+                              child: Text(
+                                '${state.currentIndex + 1} of ${kQuizQuestions.length}',
+                                style: AppTextStyles.labelSM,
+                              ),
                             ),
-                          ),
+
+                            const SizedBox(width: 38),
+                          ],
                         ),
                       ),
 
-                      // Step counter pill
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.bg300,
-                          borderRadius: BorderRadius.circular(AppRadius.full),
-                          border: Border.all(color: AppColors.glassBorder),
-                        ),
-                        child: Text(
-                          '${_currentIndex + 1} of ${kQuizQuestions.length}',
-                          style: AppTextStyles.labelSM,
-                        ),
-                      ),
+                      const SizedBox(height: AppSpacing.lg),
 
-                      // Skip — invisible placeholder for balance
-                      const SizedBox(width: 38),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: AppSpacing.lg),
-
-                // ── Progress bar ────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.screenH,
-                  ),
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: progress),
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeInOutCubic,
-                    builder: (_, v, __) => ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                      child: LinearProgressIndicator(
-                        value: v,
-                        minHeight: 4,
-                        backgroundColor: AppColors.bg400,
-                        valueColor: const AlwaysStoppedAnimation(
-                          AppColors.neonBlue,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: AppSpacing.xl3),
-
-                // ── Question ────────────────────────────
-                FadeTransition(
-                  opacity: _fadeAnim,
-                  child: SlideTransition(
-                    position: _slideAnim,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.screenH,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _current.emoji,
-                            style: const TextStyle(fontSize: 40),
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
-                          Text(
-                            _current.question,
-                            style: AppTextStyles.displayMD,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: AppSpacing.xl2),
-
-                // ── Options ─────────────────────────────
-                Expanded(
-                  child: FadeTransition(
-                    opacity: _fadeAnim,
-                    child: SlideTransition(
-                      position: _slideAnim,
-                      child: ListView.separated(
+                      // ── Progress bar ────────────────────────
+                      Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.screenH,
                         ),
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _current.options.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: AppSpacing.md),
-                        itemBuilder: (_, i) => QuizOptionCard(
-                          label: _current.options[i],
-                          isSelected: _answers[_currentIndex] == i,
-                          onTap: () => _selectOption(i),
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0, end: progress),
+                          duration: const Duration(milliseconds: 400),
+                          curve: Curves.easeInOutCubic,
+                          builder: (_, v, __) => ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.full),
+                            child: LinearProgressIndicator(
+                              value: v,
+                              minHeight: 4,
+                              backgroundColor: AppColors.bg400,
+                              valueColor: const AlwaysStoppedAnimation(
+                                AppColors.neonBlue,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ),
 
-                // ── CTA button ──────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.screenH,
-                    AppSpacing.lg,
-                    AppSpacing.screenH,
-                    AppSpacing.xl2,
-                  ),
-                  child: _NextButton(
-                    label: _isLast ? 'Build My Profile' : 'Next',
-                    isLast: _isLast,
-                    enabled: _canProceed,
-                    onTap: _next,
+                      const SizedBox(height: AppSpacing.xl3),
+
+                      // ── Question ────────────────────────────
+                      FadeTransition(
+                        opacity: _fadeAnim,
+                        child: SlideTransition(
+                          position: _slideAnim,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.screenH,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  current.emoji,
+                                  style: const TextStyle(fontSize: 40),
+                                ),
+                                const SizedBox(height: AppSpacing.lg),
+                                Text(
+                                  current.question,
+                                  style: AppTextStyles.displayMD,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSpacing.xl2),
+
+                      // ── Options ─────────────────────────────
+                      Expanded(
+                        child: FadeTransition(
+                          opacity: _fadeAnim,
+                          child: SlideTransition(
+                            position: _slideAnim,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.screenH,
+                              ),
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: current.options.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: AppSpacing.md),
+                              itemBuilder: (_, i) => QuizOptionCard(
+                                label: current.options[i],
+                                isSelected:
+                                    state.answers[state.currentIndex] == i,
+                                onTap: () => context.read<QuizBloc>().add(
+                                  SelectOption(i),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // ── CTA button ──────────────────────────
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.screenH,
+                          AppSpacing.lg,
+                          AppSpacing.screenH,
+                          AppSpacing.xl2,
+                        ),
+                        child: _NextButton(
+                          label: state.isLast ? 'Build My Profile' : 'Next',
+                          isLast: state.isLast,
+                          enabled: state.canProceed,
+                          onTap: () {
+                            if (state.isLast) {
+                              context.read<QuizBloc>().add(NextQuestion());
+                            } else {
+                              _handlePageTransition(() {
+                                context.read<QuizBloc>().add(NextQuestion());
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// CTA Button
-// ─────────────────────────────────────────────
 class _NextButton extends StatefulWidget {
   final String label;
   final bool isLast;

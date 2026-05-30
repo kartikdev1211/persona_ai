@@ -1,12 +1,55 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persona_ai/common_widget/glass_card.dart';
+import 'package:persona_ai/core/routes/app_routes.dart';
+import 'package:persona_ai/core/storage/storage_helper.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
+import 'package:persona_ai/core/theme/theme_bloc.dart';
 import 'package:persona_ai/models/home/home_model.dart';
+import 'package:persona_ai/screens/profile/widgets/badge_items.dart';
+import 'package:persona_ai/screens/profile/widgets/profile_stat_card.dart';
+import 'package:persona_ai/screens/profile/widgets/settings_tile.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _notificationsEnabled = StorageHelper.notificationsEnabled;
+
+  void _confirmDelete() {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+          'This action is permanent and will erase all your progress. Are you sure?',
+        ),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(context),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              StorageHelper.clearUserSession();
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil(AppRoutes.onboarding, (route) => false);
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +151,7 @@ class ProfileScreen extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: _ProfileStatCard(
+                      child: ProfileStatCard(
                         label: 'Day Streak',
                         value: '${user.streakDays}',
                         icon: Icons.local_fire_department_rounded,
@@ -117,7 +160,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
-                      child: _ProfileStatCard(
+                      child: ProfileStatCard(
                         label: 'Confidence',
                         value: '${(user.confidenceScore * 100).toInt()}',
                         icon: Icons.auto_awesome_rounded,
@@ -137,22 +180,22 @@ class ProfileScreen extends StatelessWidget {
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
-                      _BadgeItem(
+                      BadgeItem(
                         icon: Icons.emoji_events_rounded,
                         color: AppColors.neonAmber,
                         label: 'Early Bird',
                       ),
-                      _BadgeItem(
+                      BadgeItem(
                         icon: Icons.forum_rounded,
                         color: AppColors.neonBlue,
                         label: 'Chatty',
                       ),
-                      _BadgeItem(
+                      BadgeItem(
                         icon: Icons.bolt_rounded,
                         color: AppColors.neonPurple,
                         label: 'Consistent',
                       ),
-                      _BadgeItem(
+                      BadgeItem(
                         icon: Icons.shield_rounded,
                         color: AppColors.neonGreen,
                         label: 'Disciplined',
@@ -164,29 +207,79 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xl2),
 
                 // Settings
-                Text('Account', style: AppTextStyles.titleSM),
+                Text('Settings & Account', style: AppTextStyles.titleSM),
                 const SizedBox(height: 12),
-                _SettingsTile(
+                SettingsTile(
                   icon: Icons.person_outline_rounded,
                   title: 'Persona Profile',
-                  onTap: () {},
+                  onTap: () =>
+                      Navigator.pushNamed(context, AppRoutes.profileDetail),
                 ),
-                _SettingsTile(
+
+                // Dark Mode Toggle
+                BlocBuilder<ThemeBloc, ThemeMode>(
+                  builder: (context, mode) {
+                    return SettingsTile(
+                      icon: Icons.dark_mode_outlined,
+                      title: 'Dark Mode',
+                      onTap: () => context.read<ThemeBloc>().add(ToggleTheme()),
+                      trailing: CupertinoSwitch(
+                        value: mode == ThemeMode.dark,
+                        activeTrackColor: AppColors.neonBlue,
+                        onChanged: (_) =>
+                            context.read<ThemeBloc>().add(ToggleTheme()),
+                      ),
+                    );
+                  },
+                ),
+
+                // Notifications Toggle
+                SettingsTile(
                   icon: Icons.notifications_none_rounded,
                   title: 'Notifications',
-                  onTap: () {},
+                  onTap: () {
+                    setState(() {
+                      _notificationsEnabled = !_notificationsEnabled;
+                      StorageHelper.notificationsEnabled =
+                          _notificationsEnabled;
+                    });
+                  },
+                  trailing: CupertinoSwitch(
+                    value: _notificationsEnabled,
+                    activeTrackColor: AppColors.neonBlue,
+                    onChanged: (val) {
+                      setState(() {
+                        _notificationsEnabled = val;
+                        StorageHelper.notificationsEnabled = val;
+                      });
+                    },
+                  ),
                 ),
-                _SettingsTile(
+
+                SettingsTile(
                   icon: Icons.workspace_premium_rounded,
                   title: 'PersonaAI Premium',
                   color: AppColors.neonPurple,
                   onTap: () {},
                 ),
-                _SettingsTile(
+
+                SettingsTile(
                   icon: Icons.logout_rounded,
                   title: 'Log Out',
+                  color: AppColors.textDisabled,
+                  onTap: () {
+                    StorageHelper.isLoggedIn = false;
+                    Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil(AppRoutes.auth, (route) => false);
+                  },
+                ),
+
+                SettingsTile(
+                  icon: Icons.delete_outline_rounded,
+                  title: 'Delete Account',
                   color: AppColors.error,
-                  onTap: () {},
+                  onTap: _confirmDelete,
                 ),
 
                 const SizedBox(height: AppSpacing.xl3),
@@ -194,112 +287,6 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ProfileStatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _ProfileStatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
-          Text(value, style: AppTextStyles.displayMD.copyWith(fontSize: 28)),
-          Text(
-            label,
-            style: AppTextStyles.labelSM.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BadgeItem extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String label;
-
-  const _BadgeItem({
-    required this.icon,
-    required this.color,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Column(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: AppColors.bg300,
-              shape: BoxShape.circle,
-              border: Border.all(color: color.withOpacity(0.3)),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: AppTextStyles.caption),
-        ],
-      ),
-    );
-  }
-}
-
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  final Color? color;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: GlassCard(
-        padding: EdgeInsets.zero,
-        child: ListTile(
-          onTap: onTap,
-          leading: Icon(
-            icon,
-            color: color ?? AppColors.textSecondary,
-            size: 20,
-          ),
-          title: Text(
-            title,
-            style: AppTextStyles.bodyMD.copyWith(color: color),
-          ),
-          trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-        ),
       ),
     );
   }
