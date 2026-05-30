@@ -1,4 +1,4 @@
-// lib/screens/home/widget/mission_card.dart
+// lib/common_widget/mission_card.dart
 
 import 'package:flutter/material.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';

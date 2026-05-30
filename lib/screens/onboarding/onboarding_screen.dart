@@ -1,9 +1,10 @@
-// lib/features/onboarding/onboarding_screen.dart
+// lib/screens/onboarding/onboarding_screen.dart
+// CHANGES: removed Goals page, _totalPages = 3, _onSkip goes to auth directly,
+//          removed _selectedGoals state, removed onboarding_goals import
 
 import 'package:flutter/material.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/models/onboarding/onboarding_model.dart';
-import 'package:persona_ai/screens/onboarding/widget/onboarding_goals.dart';
 import 'package:persona_ai/screens/onboarding/widget/onboarding_navbar.dart';
 import 'package:persona_ai/screens/onboarding/widget/onboarding_slides.dart';
 
@@ -17,25 +18,13 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageCtrl = PageController();
   int _currentPage = 0;
-  List<int> _selectedGoals = [];
 
-  // total pages = 3 slides + 1 goals
-  static const int _totalPages = 4;
+  // 3 slides only — goals page removed
+  static const int _totalPages = 3;
 
-  List<Color> get _activeGradient {
-    if (_currentPage < kSlides.length) {
-      return kSlides[_currentPage].gradient;
-    }
-    return AppColors.primaryGradient;
-  }
-
-  bool get _canProceed {
-    if (_currentPage == _totalPages - 1) return _selectedGoals.isNotEmpty;
-    return true;
-  }
+  List<Color> get _activeGradient => kSlides[_currentPage].gradient;
 
   void _onNext() {
-    if (!_canProceed) return;
     if (_currentPage < _totalPages - 1) {
       _pageCtrl.nextPage(
         duration: const Duration(milliseconds: 400),
@@ -46,17 +35,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  void _onSkip() {
-    _pageCtrl.animateToPage(
-      _totalPages - 1,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOutCubic,
-    );
-  }
+  void _onSkip() => _navigateToAuth();
 
   void _navigateToAuth() {
-    // Replace with your router
-    // context.go('/auth');
     Navigator.of(context).pushReplacementNamed('/auth');
   }
 
@@ -72,10 +53,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: AppColors.bg100,
       body: Stack(
         children: [
-          // ── Ambient background glow ──────────
+          // Ambient glow — shifts color per slide
           _AmbientGlow(gradient: _activeGradient),
 
-          // ── Pages ────────────────────────────
           SafeArea(
             bottom: false,
             child: Column(
@@ -84,34 +64,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: PageView(
                     controller: _pageCtrl,
                     onPageChanged: (i) => setState(() => _currentPage = i),
-                    children: [
-                      // 3 intro slides
-                      ...List.generate(
-                        kSlides.length,
-                        (i) => Center(
-                          child: OnboardingSlideView(slide: kSlides[i]),
-                        ),
-                      ),
-
-                      // Goals page
-                      SingleChildScrollView(
-                        child: OnboardingGoalsPage(
-                          onSelectionChanged: (s) =>
-                              setState(() => _selectedGoals = s),
-                        ),
-                      ),
-                    ],
+                    children: List.generate(
+                      kSlides.length,
+                      (i) =>
+                          Center(child: OnboardingSlideView(slide: kSlides[i])),
+                    ),
                   ),
                 ),
 
-                // ── Nav bar ──────────────────
+                // Nav bar — always canProceed (no goals gate)
                 OnboardingNavBar(
                   currentPage: _currentPage,
                   totalPages: _totalPages,
                   gradient: _activeGradient,
                   onNext: _onNext,
                   onSkip: _onSkip,
-                  canProceed: _canProceed,
                 ),
               ],
             ),
@@ -122,7 +89,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-// Animated ambient glow that changes color per slide
 class _AmbientGlow extends StatelessWidget {
   final List<Color> gradient;
   const _AmbientGlow({required this.gradient});

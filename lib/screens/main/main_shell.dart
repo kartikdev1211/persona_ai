@@ -3,6 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/screens/home/home_screen.dart';
+import 'package:persona_ai/screens/coach/coach_screen.dart';
+import 'package:persona_ai/screens/missions/missions_screen.dart';
+import 'package:persona_ai/screens/progress/progress_screen.dart';
+import 'package:persona_ai/screens/profile/profile_screen.dart';
 import 'widget/app_bottom_nav.dart';
 
 // import '../missions/missions_screen.dart';
@@ -25,10 +29,10 @@ class _MainShellState extends State<MainShell> {
 
   final _pages = const [
     HomeScreen(),
-    _PlaceholderScreen(label: 'Missions', icon: Icons.bolt_rounded),
-    _PlaceholderScreen(label: 'Progress', icon: Icons.bar_chart_rounded),
-    _PlaceholderScreen(label: 'Coach', icon: Icons.psychology_rounded),
-    _PlaceholderScreen(label: 'Profile', icon: Icons.person_rounded),
+    MissionsScreen(),
+    ProgressScreen(),
+    CoachScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -39,39 +43,6 @@ class _MainShellState extends State<MainShell> {
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,
         onTap: (i) => setState(() => _currentIndex = i),
-      ),
-    );
-  }
-}
-
-// Temporary placeholder — delete as you build each real screen
-class _PlaceholderScreen extends StatelessWidget {
-  final String label;
-  final IconData icon;
-
-  const _PlaceholderScreen({required this.label, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg100,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: AppColors.textDisabled, size: 48),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.textDisabled,
-                fontFamily: 'Syne',
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

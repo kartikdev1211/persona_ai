@@ -1,4 +1,5 @@
-// lib/features/auth/auth_screen.dart
+// lib/screens/auth/auth_screen.dart
+// CHANGE: _submit() now pushes '/quiz' instead of '/persona-setup'
 
 import 'package:flutter/material.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
@@ -25,7 +26,6 @@ class _AuthScreenState extends State<AuthScreen>
 
   bool _loading = false;
 
-  // Tab slider animation
   late final AnimationController _tabCtrl;
   late final Animation<double> _tabSlide;
 
@@ -47,12 +47,11 @@ class _AuthScreenState extends State<AuthScreen>
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
-    await Future.delayed(
-      const Duration(milliseconds: 1500),
-    ); // replace with real auth
+    await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
     setState(() => _loading = false);
-    Navigator.of(context).pushReplacementNamed('/persona-setup');
+    // ── UPDATED: go to quiz, not persona-setup directly ──
+    Navigator.of(context).pushReplacementNamed('/quiz');
   }
 
   @override
@@ -73,10 +72,7 @@ class _AuthScreenState extends State<AuthScreen>
       backgroundColor: AppColors.bg100,
       body: Stack(
         children: [
-          // ── Ambient glow ────────────────────
           const _AuthGlow(),
-
-          // ── Scrollable content ───────────────
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
@@ -86,18 +82,10 @@ class _AuthScreenState extends State<AuthScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: AppSpacing.xl2),
-
-                  // ── Logo ────────────────────
                   _MiniLogo(),
-
                   const SizedBox(height: AppSpacing.xl3),
-
-                  // ── Tab switcher ────────────
                   _TabSwitcher(notifier: _notifier, slideAnim: _tabSlide),
-
                   const SizedBox(height: AppSpacing.xl3),
-
-                  // ── Form ─────────────────────
                   AuthForm(
                     notifier: _notifier,
                     formKey: _formKey,
@@ -106,10 +94,7 @@ class _AuthScreenState extends State<AuthScreen>
                     nameCtrl: _nameCtrl,
                     confirmCtrl: _confirmCtrl,
                   ),
-
                   const SizedBox(height: AppSpacing.xl2),
-
-                  // ── Submit button ───────────
                   ValueListenableBuilder<AuthMode>(
                     valueListenable: _notifier,
                     builder: (_, mode, __) => _SubmitButton(
@@ -120,20 +105,11 @@ class _AuthScreenState extends State<AuthScreen>
                       onTap: _submit,
                     ),
                   ),
-
                   const SizedBox(height: AppSpacing.xl2),
-
-                  // ── Divider ─────────────────
                   _OrDivider(),
-
                   const SizedBox(height: AppSpacing.xl2),
-
-                  // ── Social buttons ───────────
                   _SocialButtons(),
-
                   const SizedBox(height: AppSpacing.xl3),
-
-                  // ── Toggle mode ─────────────
                   ValueListenableBuilder<AuthMode>(
                     valueListenable: _notifier,
                     builder: (_, mode, __) => Center(
@@ -163,7 +139,6 @@ class _AuthScreenState extends State<AuthScreen>
                       ),
                     ),
                   ),
-
                   const SizedBox(height: AppSpacing.xl3),
                 ],
               ),
@@ -176,7 +151,7 @@ class _AuthScreenState extends State<AuthScreen>
 }
 
 // ────────────────────────────────────────────
-// Sub-widgets
+// Sub-widgets (unchanged)
 // ────────────────────────────────────────────
 
 class _AuthGlow extends StatelessWidget {
@@ -247,7 +222,6 @@ class _MiniLogo extends StatelessWidget {
   }
 }
 
-// Animated sliding tab (Login | Sign Up)
 class _TabSwitcher extends StatelessWidget {
   final AuthNotifier notifier;
   final Animation<double> slideAnim;
@@ -269,7 +243,6 @@ class _TabSwitcher extends StatelessWidget {
           final slotW = (constraints.maxWidth - 8) / 2;
           return Stack(
             children: [
-              // sliding pill
               AnimatedBuilder(
                 animation: slideAnim,
                 builder: (_, __) => Transform.translate(
@@ -291,8 +264,6 @@ class _TabSwitcher extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // labels
               Row(
                 children: [
                   Expanded(
@@ -473,7 +444,7 @@ class _SocialBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {}, // TODO: social auth
+      onTap: () {},
       child: Container(
         height: 50,
         decoration: BoxDecoration(

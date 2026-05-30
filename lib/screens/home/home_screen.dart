@@ -8,7 +8,7 @@ import 'package:persona_ai/models/home/home_model.dart';
 import 'widget/goal_progress_row.dart';
 import 'widget/home_header.dart';
 import 'widget/insight_card.dart';
-import 'widget/mission_card.dart';
+import 'package:persona_ai/common_widget/mission_card.dart';
 import 'widget/quick_actions.dart';
 
 class HomeScreen extends StatefulWidget {

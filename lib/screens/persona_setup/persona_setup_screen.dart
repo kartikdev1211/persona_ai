@@ -53,7 +53,7 @@ class _PersonaSetupScreenState extends State<PersonaSetupScreen>
     await Future.delayed(const Duration(milliseconds: 1200)); // replace w/ save
     if (!mounted) return;
     setState(() => _loading = false);
-    Navigator.of(context).pushReplacementNamed('/home');
+    Navigator.of(context).pushReplacementNamed('/persona-report');
   }
 
   void _onNext() {
