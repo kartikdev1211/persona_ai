@@ -64,19 +64,19 @@ class _QuizOptionCardState extends State<QuizOptionCard>
           ),
           decoration: BoxDecoration(
             color: widget.isSelected
-                ? AppColors.neonBlue.withOpacity(0.1)
-                : AppColors.bg200,
+                ? AppColors.neonBlue.withValues(alpha: 0.1)
+                : Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
               color: widget.isSelected
-                  ? AppColors.neonBlue.withOpacity(0.6)
-                  : AppColors.glassBorder,
+                  ? AppColors.neonBlue.withValues(alpha: 0.6)
+                  : Theme.of(context).colorScheme.outline,
               width: widget.isSelected ? 1.5 : 1,
             ),
             boxShadow: widget.isSelected
                 ? [
                     BoxShadow(
-                      color: AppColors.neonBlue.withOpacity(0.12),
+                      color: AppColors.neonBlue.withValues(alpha: 0.12),
                       blurRadius: 16,
                       offset: const Offset(0, 4),
                     ),
@@ -98,7 +98,9 @@ class _QuizOptionCardState extends State<QuizOptionCard>
                   border: Border.all(
                     color: widget.isSelected
                         ? AppColors.neonBlue
-                        : AppColors.textDisabled,
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                 ),
@@ -116,10 +118,12 @@ class _QuizOptionCardState extends State<QuizOptionCard>
                   widget.label,
                   style: AppTextStyles.bodyMD.copyWith(
                     color: widget.isSelected
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+                        ? Theme.of(context).colorScheme.onSurface
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.7),
                     fontWeight: widget.isSelected
-                        ? FontWeight.w500
+                        ? FontWeight.w600
                         : FontWeight.w400,
                   ),
                 ),

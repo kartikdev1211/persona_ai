@@ -31,11 +31,20 @@ class HomeHeader extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_greeting, style: AppTextStyles.bodyMD),
+                  Text(
+                    _greeting,
+                    style: AppTextStyles.bodyMD.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
                   const SizedBox(height: 2),
                   RichText(
                     text: TextSpan(
-                      style: AppTextStyles.displayMD,
+                      style: AppTextStyles.displayMD.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                       children: [
                         TextSpan(text: '${user.name} '),
                         WidgetSpan(
@@ -96,9 +105,11 @@ class HomeHeader extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.bg200,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(AppRadius.full),
-                      border: Border.all(color: AppColors.glassBorder),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                     ),
                     child: Text(
                       'Lv ${user.level}',
@@ -175,7 +186,12 @@ class _XpBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('XP Progress', style: AppTextStyles.caption),
+            Text(
+              'XP Progress',
+              style: AppTextStyles.caption.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
+            ),
             Text(
               '${user.xp} / ${user.xpToNext} XP',
               style: AppTextStyles.caption.copyWith(color: AppColors.neonGreen),
@@ -193,7 +209,7 @@ class _XpBar extends StatelessWidget {
               curve: Curves.easeOutCubic,
               builder: (_, v, __) => LinearProgressIndicator(
                 value: v,
-                backgroundColor: AppColors.bg400,
+                backgroundColor: Theme.of(context).colorScheme.outline,
                 valueColor: const AlwaysStoppedAnimation(AppColors.neonGreen),
               ),
             ),

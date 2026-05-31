@@ -85,7 +85,7 @@ class _PersonaSetupScreenState extends State<PersonaSetupScreen>
           final accentColor = _getAccentColor(state.currentStep);
 
           return Scaffold(
-            backgroundColor: AppColors.bg100,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: Stack(
               children: [
                 // ── Ambient glow (shifts per step) ─────────────
@@ -97,7 +97,11 @@ class _PersonaSetupScreenState extends State<PersonaSetupScreen>
                       center: Alignment.topRight,
                       radius: 0.8,
                       colors: [
-                        accentColor.withOpacity(0.08),
+                        accentColor.withValues(
+                          alpha: Theme.of(context).brightness == Brightness.dark
+                              ? 0.08
+                              : 0.04,
+                        ),
                         Colors.transparent,
                       ],
                     ),
@@ -205,13 +209,17 @@ class _TopBar extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: AppColors.bg300,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: AppColors.glassBorder),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_rounded,
-                color: AppColors.textSecondary,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
                 size: 18,
               ),
             ),
@@ -235,13 +243,15 @@ class _TopBar extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.bg300,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.full),
-            border: Border.all(color: AppColors.glassBorder),
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
           ),
           child: Text(
             '${state.stepIndex + 1} / ${state.totalSteps}',
-            style: AppTextStyles.labelSM,
+            style: AppTextStyles.labelSM.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
         ),
       ],
@@ -267,7 +277,7 @@ class _ProgressBar extends StatelessWidget {
           curve: Curves.easeInOutCubic,
           builder: (_, v, __) => LinearProgressIndicator(
             value: v,
-            backgroundColor: AppColors.bg400,
+            backgroundColor: Theme.of(context).colorScheme.outline,
             valueColor: AlwaysStoppedAnimation(color),
           ),
         ),
@@ -356,12 +366,14 @@ class _CtaButtonState extends State<_CtaButton>
                         : AppColors.primaryGradient,
                   )
                 : null,
-            color: widget.enabled ? null : AppColors.bg400,
+            color: widget.enabled
+                ? null
+                : Theme.of(context).colorScheme.outline,
             borderRadius: BorderRadius.circular(AppRadius.md),
             boxShadow: widget.enabled
                 ? [
                     BoxShadow(
-                      color: widget.accentColor.withOpacity(0.35),
+                      color: widget.accentColor.withValues(alpha: 0.35),
                       blurRadius: 20,
                       offset: const Offset(0, 6),
                     ),
@@ -386,7 +398,9 @@ class _CtaButtonState extends State<_CtaButton>
                         style: AppTextStyles.titleMD.copyWith(
                           color: widget.enabled
                               ? AppColors.textInverse
-                              : AppColors.textDisabled,
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.4),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -398,7 +412,9 @@ class _CtaButtonState extends State<_CtaButton>
                               : Icons.arrow_forward_rounded,
                           color: widget.enabled
                               ? AppColors.textInverse
-                              : AppColors.textDisabled,
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.4),
                           size: 18,
                         ),
                       ],

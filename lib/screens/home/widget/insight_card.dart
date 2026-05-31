@@ -25,6 +25,8 @@ class _InsightCardState extends State<InsightCard> {
   @override
   Widget build(BuildContext context) {
     final insight = widget.insights[_index];
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: _next,
@@ -32,7 +34,10 @@ class _InsightCardState extends State<InsightCard> {
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [insight.color.withOpacity(0.08), AppColors.bg200],
+            colors: [
+              insight.color.withOpacity(0.08),
+              theme.colorScheme.surface,
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -58,7 +63,7 @@ class _InsightCardState extends State<InsightCard> {
                   insight.text,
                   key: ValueKey(_index),
                   style: AppTextStyles.bodySM.copyWith(
-                    color: AppColors.textPrimary,
+                    color: theme.colorScheme.onSurface,
                     height: 1.5,
                   ),
                 ),
@@ -74,7 +79,11 @@ class _InsightCardState extends State<InsightCard> {
                   width: 4,
                   height: i == _index ? 16 : 4,
                   decoration: BoxDecoration(
-                    color: i == _index ? insight.color : AppColors.textDisabled,
+                    color: i == _index
+                        ? insight.color
+                        : (isDark
+                              ? AppColors.textDisabled
+                              : AppColors.lightTextDisabled),
                     borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
                 ),

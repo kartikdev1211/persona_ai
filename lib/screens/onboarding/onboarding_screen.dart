@@ -5,9 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persona_ai/core/routes/app_routes.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/models/onboarding/onboarding_model.dart';
-import 'package:persona_ai/screens/onboarding/bloc/bloc/onboarding_bloc.dart';
-import 'package:persona_ai/screens/onboarding/bloc/event/onboarding_event.dart';
-import 'package:persona_ai/screens/onboarding/bloc/state/onboarding_state.dart';
+import 'package:persona_ai/screens/onboarding/onboarding_bloc/bloc/onboarding_bloc.dart';
+import 'package:persona_ai/screens/onboarding/onboarding_bloc/event/onboarding_event.dart';
+import 'package:persona_ai/screens/onboarding/onboarding_bloc/state/onboarding_state.dart';
 import 'package:persona_ai/screens/onboarding/widget/onboarding_navbar.dart';
 import 'package:persona_ai/screens/onboarding/widget/onboarding_slides.dart';
 

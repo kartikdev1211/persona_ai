@@ -26,11 +26,17 @@ class ProfileStatCard extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 8),
-          Text(value, style: AppTextStyles.displayMD.copyWith(fontSize: 28)),
+          Text(
+            value,
+            style: AppTextStyles.displayMD.copyWith(
+              fontSize: 28,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
           Text(
             label,
             style: AppTextStyles.labelSM.copyWith(
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
         ],

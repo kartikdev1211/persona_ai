@@ -2,7 +2,6 @@
 // TYPOGRAPHY
 // ─────────────────────────────────────────────
 import 'package:flutter/material.dart';
-import 'package:persona_ai/core/theme/app_colors.dart';
 
 class AppTextStyles {
   // Display — Syne (geometric, futuristic)
@@ -14,7 +13,6 @@ class AppTextStyles {
     fontSize: 36,
     fontWeight: FontWeight.w800,
     letterSpacing: -1.2,
-    color: AppColors.textPrimary,
     height: 1.1,
   );
 
@@ -23,7 +21,6 @@ class AppTextStyles {
     fontSize: 28,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.8,
-    color: AppColors.textPrimary,
     height: 1.2,
   );
 
@@ -32,7 +29,6 @@ class AppTextStyles {
     fontSize: 22,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.4,
-    color: AppColors.textPrimary,
     height: 1.25,
   );
 
@@ -41,7 +37,6 @@ class AppTextStyles {
     fontSize: 18,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.2,
-    color: AppColors.textPrimary,
     height: 1.3,
   );
 
@@ -50,7 +45,6 @@ class AppTextStyles {
     fontSize: 16,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.1,
-    color: AppColors.textPrimary,
     height: 1.35,
   );
 
@@ -59,7 +53,6 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.1,
-    color: AppColors.textPrimary,
     height: 1.4,
   );
 
@@ -67,7 +60,6 @@ class AppTextStyles {
     fontFamily: _bodyFont,
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    color: AppColors.textSecondary,
     height: 1.6,
   );
 
@@ -75,7 +67,6 @@ class AppTextStyles {
     fontFamily: _bodyFont,
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    color: AppColors.textSecondary,
     height: 1.55,
   );
 
@@ -83,7 +74,6 @@ class AppTextStyles {
     fontFamily: _bodyFont,
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    color: AppColors.textSecondary,
     height: 1.5,
   );
 
@@ -92,7 +82,6 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.6,
-    color: AppColors.textPrimary,
   );
 
   static TextStyle labelSM = const TextStyle(
@@ -100,7 +89,6 @@ class AppTextStyles {
     fontSize: 11,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.8,
-    color: AppColors.textSecondary,
   );
 
   static TextStyle caption = const TextStyle(
@@ -108,7 +96,6 @@ class AppTextStyles {
     fontSize: 11,
     fontWeight: FontWeight.w400,
     letterSpacing: 0.2,
-    color: AppColors.textDisabled,
   );
 
   // Gradient text helper — use with ShaderMask

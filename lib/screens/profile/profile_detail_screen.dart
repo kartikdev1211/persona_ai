@@ -25,7 +25,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
         : StorageHelper.userName;
 
     return Scaffold(
-      backgroundColor: AppColors.bg100,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

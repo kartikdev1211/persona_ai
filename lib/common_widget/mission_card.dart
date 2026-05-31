@@ -57,11 +57,11 @@ class _MissionCardState extends State<MissionCard>
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              color: AppColors.bg200,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
                 color: isCompleted
-                    ? AppColors.glassBorder
+                    ? Theme.of(context).colorScheme.outline
                     : m.gradient.first.withOpacity(0.3),
               ),
               boxShadow: isCompleted
@@ -83,7 +83,9 @@ class _MissionCardState extends State<MissionCard>
                     gradient: isCompleted
                         ? null
                         : LinearGradient(colors: m.gradient),
-                    color: isCompleted ? AppColors.bg400 : null,
+                    color: isCompleted
+                        ? Theme.of(context).colorScheme.outline
+                        : null,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Center(
@@ -110,10 +112,13 @@ class _MissionCardState extends State<MissionCard>
                             child: Text(
                               m.title,
                               style: AppTextStyles.titleSM.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
                                 decoration: isCompleted
                                     ? TextDecoration.lineThrough
                                     : null,
-                                decorationColor: AppColors.textDisabled,
+                                decorationColor: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.3),
                               ),
                             ),
                           ),
@@ -141,7 +146,11 @@ class _MissionCardState extends State<MissionCard>
                       const SizedBox(height: 3),
                       Text(
                         m.description,
-                        style: AppTextStyles.bodySM,
+                        style: AppTextStyles.bodySM.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),

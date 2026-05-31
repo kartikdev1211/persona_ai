@@ -1,7 +1,6 @@
 // lib/screens/main/main_shell.dart
 
 import 'package:flutter/material.dart';
-import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/screens/home/home_screen.dart';
 import 'package:persona_ai/screens/coach/coach_screen.dart';
 import 'package:persona_ai/screens/missions/missions_screen.dart';
@@ -38,7 +37,7 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg100,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,

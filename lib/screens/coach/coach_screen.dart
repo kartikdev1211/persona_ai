@@ -68,7 +68,7 @@ class _CoachScreenState extends State<CoachScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg100,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         centerTitle: false,
         title: Row(
@@ -147,7 +147,7 @@ class _ChatBubble extends StatelessWidget {
           if (isAi) ...[
             CircleAvatar(
               radius: 14,
-              backgroundColor: AppColors.bg300,
+              backgroundColor: Theme.of(context).colorScheme.outline,
               child: const Icon(
                 Icons.bolt_rounded,
                 size: 14,
@@ -160,19 +160,25 @@ class _ChatBubble extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isAi ? AppColors.bg200 : AppColors.neonBlue,
+                color: isAi
+                    ? Theme.of(context).colorScheme.surface
+                    : AppColors.neonBlue,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
                   bottomLeft: Radius.circular(isAi ? 4 : 16),
                   bottomRight: Radius.circular(isAi ? 16 : 4),
                 ),
-                border: isAi ? Border.all(color: AppColors.glassBorder) : null,
+                border: isAi
+                    ? Border.all(color: Theme.of(context).colorScheme.outline)
+                    : null,
               ),
               child: Text(
                 message.text,
                 style: AppTextStyles.bodyMD.copyWith(
-                  color: isAi ? AppColors.textPrimary : AppColors.textInverse,
+                  color: isAi
+                      ? Theme.of(context).colorScheme.onSurface
+                      : AppColors.textInverse,
                 ),
               ),
             ),
@@ -194,7 +200,7 @@ class _TypingIndicator extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 14,
-            backgroundColor: AppColors.bg300,
+            backgroundColor: Theme.of(context).colorScheme.outline,
             child: const Icon(
               Icons.bolt_rounded,
               size: 14,
@@ -205,9 +211,9 @@ class _TypingIndicator extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.bg200,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.glassBorder),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -283,8 +289,10 @@ class _ChatInput extends StatelessWidget {
         AppSpacing.xl2,
       ),
       decoration: BoxDecoration(
-        color: AppColors.bg100,
-        border: Border(top: BorderSide(color: AppColors.glassBorder)),
+        color: Theme.of(context).scaffoldBackgroundColor,
+        border: Border(
+          top: BorderSide(color: Theme.of(context).colorScheme.outline),
+        ),
       ),
       child: Row(
         children: [
@@ -292,13 +300,17 @@ class _ChatInput extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: AppColors.bg200,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(AppRadius.full),
-                border: Border.all(color: AppColors.glassBorder),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
               child: TextField(
                 controller: controller,
-                style: AppTextStyles.bodyMD,
+                style: AppTextStyles.bodyMD.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Message AI Coach...',
                   border: InputBorder.none,
@@ -342,13 +354,13 @@ class _VoiceWaveButton extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: AppColors.bg200,
+        color: Theme.of(context).colorScheme.surface,
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.mic_none_rounded,
-        color: AppColors.textSecondary,
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
         size: 20,
       ),
     );

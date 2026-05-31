@@ -4,11 +4,17 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Backgrounds
+  // Backgrounds - Dark
   static const Color bg100 = Color(0xFF090B10); // deepest bg
   static const Color bg200 = Color(0xFF0F1218); // card bg
   static const Color bg300 = Color(0xFF161B24); // elevated card
   static const Color bg400 = Color(0xFF1E2530); // input / chip bg
+
+  // Backgrounds - Light
+  static const Color lightBg100 = Color(0xFFF8F9FD); // light scaffold
+  static const Color lightBg200 = Color(0xFFFFFFFF); // light card
+  static const Color lightBg300 = Color(0xFFF0F2F8); // light elevated
+  static const Color lightBg400 = Color(0xFFE2E8F0); // light input
 
   // Neon Accents
   static const Color neonBlue = Color(0xFF00D4FF); // primary CTA
@@ -39,10 +45,16 @@ class AppColors {
     Color(0x00AB5CF7),
   ];
 
-  // Text
+  // Text - Dark
   static const Color textPrimary = Color(0xFFF0F4FF);
   static const Color textSecondary = Color(0xFF8A95A8);
   static const Color textDisabled = Color(0xFF3D4655);
+
+  // Text - Light
+  static const Color lightTextPrimary = Color(0xFF1A1F26);
+  static const Color lightTextSecondary = Color(0xFF4A5568);
+  static const Color lightTextDisabled = Color(0xFF94A3B8);
+
   static const Color textInverse = Color(0xFF090B10);
 
   // Semantic

@@ -1,6 +1,7 @@
 // lib/screens/home/home_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
 import 'package:persona_ai/common_widget/section_header.dart';
@@ -10,6 +11,9 @@ import 'widget/home_header.dart';
 import 'widget/insight_card.dart';
 import 'package:persona_ai/common_widget/mission_card.dart';
 import 'widget/quick_actions.dart';
+import 'bloc/home_bloc.dart';
+import 'bloc/home_event.dart';
+import 'bloc/home_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,18 +30,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   final _scrollCtrl = ScrollController();
 
-  // Track completed missions locally
-  final Set<int> _completedIndices = {2}; // index 2 pre-completed from model
-
-  void _onMissionTap(int index) {
-    if (kTodayMissions[index].isCompleted) return;
-    setState(() => _completedIndices.add(index));
-  }
-
-  int get _completedCount =>
-      kTodayMissions.where((m) => m.isCompleted).length +
-      _completedIndices.difference({2}).length;
-
   @override
   void dispose() {
     _scrollCtrl.dispose();
@@ -48,8 +40,35 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     super.build(context);
 
+    return BlocProvider(
+      create: (context) => HomeBloc()..add(HomeStarted()),
+      child: BlocBuilder<HomeBloc, HomeState>(
+        builder: (context, state) {
+          if (state is HomeLoading || state is HomeInitial) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (state is HomeFailure) {
+            return Scaffold(body: Center(child: Text(state.message)));
+          }
+
+          if (state is HomeLoaded) {
+            return _buildContent(context, state);
+          }
+
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, HomeLoaded state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.bg100,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // ── Ambient top glow ──────────────────
@@ -63,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.neonBlue.withOpacity(0.07),
+                    AppColors.neonBlue.withOpacity(isDark ? 0.07 : 0.04),
                     Colors.transparent,
                   ],
                 ),
@@ -86,19 +105,19 @@ class _HomeScreenState extends State<HomeScreen>
                       AppSpacing.screenH,
                       0,
                     ),
-                    child: HomeHeader(user: kMockUser),
+                    child: HomeHeader(user: state.user),
                   ),
                 ),
 
                 _sliver(height: AppSpacing.xl2),
 
                 // ── Quick actions ─────────────────
-                SliverToBoxAdapter(
+                const SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: AppSpacing.screenH,
                     ),
-                    child: const QuickActions(),
+                    child: QuickActions(),
                   ),
                 ),
 
@@ -112,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     child: SectionHeader(
                       title: "Today's Missions",
-                      actionLabel: _missionSubtitle,
+                      actionLabel: _missionSubtitle(state),
                     ),
                   ),
                 ),
@@ -125,8 +144,9 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((_, i) {
-                      final mission = kTodayMissions[i];
-                      final isLocallyCompleted = _completedIndices.contains(i);
+                      final mission = state.missions[i];
+                      final isLocallyCompleted = state.completedIndices
+                          .contains(i);
                       final effectiveMission = isLocallyCompleted
                           ? DailyMission(
                               title: mission.title,
@@ -144,17 +164,19 @@ class _HomeScreenState extends State<HomeScreen>
                         padding: const EdgeInsets.only(bottom: AppSpacing.md),
                         child: MissionCard(
                           mission: effectiveMission,
-                          onTap: () => _onMissionTap(i),
+                          onTap: () {
+                            context.read<HomeBloc>().add(HomeMissionTapped(i));
+                          },
                         ),
                       );
-                    }, childCount: kTodayMissions.length),
+                    }, childCount: state.missions.length),
                   ),
                 ),
 
                 // ── Goal progress ─────────────────
-                SliverToBoxAdapter(
+                const SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: AppSpacing.screenH,
                     ),
                     child: SectionHeader(title: 'Goal Progress'),
@@ -168,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen>
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.screenH,
                     ),
-                    child: GoalProgressRow(goals: kGoalProgresses),
+                    child: GoalProgressRow(goals: state.goals),
                   ),
                 ),
 
@@ -194,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen>
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.screenH,
                     ),
-                    child: InsightCard(insights: kInsights),
+                    child: InsightCard(insights: state.insights),
                   ),
                 ),
 
@@ -207,9 +229,12 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  String get _missionSubtitle {
-    final total = kTodayMissions.length;
-    return '$_completedCount/$total done';
+  String _missionSubtitle(HomeLoaded state) {
+    final total = state.missions.length;
+    final completedCount =
+        state.missions.where((m) => m.isCompleted).length +
+        state.completedIndices.difference({2}).length;
+    return '$completedCount/$total done';
   }
 
   SliverToBoxAdapter _sliver({required double height}) =>

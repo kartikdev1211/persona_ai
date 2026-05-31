@@ -29,12 +29,16 @@ class SettingsTile extends StatelessWidget {
           onTap: onTap,
           leading: Icon(
             icon,
-            color: color ?? AppColors.textSecondary,
+            color:
+                color ??
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             size: 20,
           ),
           title: Text(
             title,
-            style: AppTextStyles.bodyMD.copyWith(color: color),
+            style: AppTextStyles.bodyMD.copyWith(
+              color: color ?? Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           trailing:
               trailing ?? const Icon(Icons.chevron_right_rounded, size: 20),

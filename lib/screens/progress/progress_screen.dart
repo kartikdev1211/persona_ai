@@ -13,7 +13,7 @@ class ProgressScreen extends StatelessWidget {
     final data = kMockProgressData;
 
     return Scaffold(
-      backgroundColor: AppColors.bg100,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('Analytics', style: AppTextStyles.displayMD),
         actions: [
@@ -161,7 +161,7 @@ class _MiniStatCard extends StatelessWidget {
           Text(
             label,
             style: AppTextStyles.labelSM.copyWith(
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
         ],
@@ -202,7 +202,7 @@ class _SkillProgressRow extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 8,
-            backgroundColor: AppColors.bg400,
+            backgroundColor: Theme.of(context).colorScheme.outline,
             valueColor: AlwaysStoppedAnimation(color),
           ),
         ),
@@ -274,7 +274,8 @@ class _ChartPainter extends CustomPainter {
     // Draw dots
     final dotPaint = Paint()..color = AppColors.neonBlue;
     final dotBorderPaint = Paint()
-      ..color = AppColors.bg100
+      ..color = Colors.white
+          .withOpacity(0.8) // Use a neutral color for border
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 

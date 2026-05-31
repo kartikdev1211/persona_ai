@@ -19,26 +19,40 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         gradient:
             gradient ??
-            const LinearGradient(
-              colors: [AppColors.bg200, AppColors.bg300],
+            LinearGradient(
+              colors: isDark
+                  ? [AppColors.bg200, AppColors.bg300]
+                  : [AppColors.lightBg200, AppColors.lightBg300],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
         borderRadius: BorderRadius.circular(borderRadius ?? AppRadius.lg),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(
+          color: isDark ? AppColors.glassBorder : AppColors.lightBg400,
+        ),
         boxShadow: [
           if (glowColor != null)
             BoxShadow(
-              color: glowColor!.withOpacity(0.15),
+              color: glowColor!.withOpacity(isDark ? 0.15 : 0.1),
               blurRadius: 20,
               spreadRadius: 0,
             ),
-          ...AppShadows.cardShadow,
+          if (!isDark)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          else
+            ...AppShadows.cardShadow,
         ],
       ),
       child: child,

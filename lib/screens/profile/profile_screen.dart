@@ -56,7 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     const user = kMockUser;
 
     return Scaffold(
-      backgroundColor: AppColors.bg100,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -66,11 +66,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Color(0xFF1E2530), AppColors.bg100],
+                    colors: [
+                      const Color(0xFF1E2530),
+                      Theme.of(context).scaffoldBackgroundColor,
+                    ],
                   ),
                 ),
                 child: Center(
@@ -82,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.bg300,
+                          color: Theme.of(context).colorScheme.surface,
                           border: Border.all(
                             color: AppColors.neonBlue,
                             width: 2,
@@ -94,7 +97,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(user.name, style: AppTextStyles.displayMD),
+                      Text(
+                        user.name,
+                        style: AppTextStyles.displayMD.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
                       Text(
                         'Level ${user.level} Growth Initiate',
                         style: AppTextStyles.labelSM.copyWith(
@@ -113,8 +121,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.all(AppSpacing.screenH),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // XP Progress
-                Text('Experience Points', style: AppTextStyles.titleSM),
+                Text(
+                  'Experience Points',
+                  style: AppTextStyles.titleSM.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 GlassCard(
                   child: Column(
@@ -122,10 +134,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('${user.xp} XP', style: AppTextStyles.labelLG),
+                          Text(
+                            '${user.xp} XP',
+                            style: AppTextStyles.labelLG.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
                           Text(
                             '${user.xpToNext} XP',
-                            style: AppTextStyles.labelSM,
+                            style: AppTextStyles.labelSM.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
+                            ),
                           ),
                         ],
                       ),
@@ -135,7 +156,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: LinearProgressIndicator(
                           value: user.xpProgress,
                           minHeight: 8,
-                          backgroundColor: AppColors.bg400,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.outline,
                           valueColor: const AlwaysStoppedAnimation(
                             AppColors.neonBlue,
                           ),
@@ -172,8 +195,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: AppSpacing.xl2),
 
-                // Achievements
-                Text('Achievements', style: AppTextStyles.titleSM),
+                Text(
+                  'Achievements',
+                  style: AppTextStyles.titleSM.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 100,
@@ -206,8 +233,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: AppSpacing.xl2),
 
-                // Settings
-                Text('Settings & Account', style: AppTextStyles.titleSM),
+                Text(
+                  'Settings & Account',
+                  style: AppTextStyles.titleSM.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 SettingsTile(
                   icon: Icons.person_outline_rounded,

@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
 import 'package:persona_ai/screens/splash/bloc/bloc/splash_bloc.dart';
 import 'package:persona_ai/screens/splash/bloc/event/splash_event.dart';
@@ -95,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen>
         child: FadeTransition(
           opacity: Tween<double>(begin: 1, end: 0).animate(_exitCtrl),
           child: Scaffold(
-            backgroundColor: AppColors.bg100,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: AnimatedBuilder(
               animation: _bgCtrl,
               builder: (_, __) => Stack(

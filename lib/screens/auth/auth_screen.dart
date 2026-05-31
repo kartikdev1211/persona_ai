@@ -95,7 +95,7 @@ class _AuthScreenState extends State<AuthScreen>
         },
         builder: (context, state) {
           return Scaffold(
-            backgroundColor: AppColors.bg100,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: Stack(
               children: [
                 const _AuthGlow(),

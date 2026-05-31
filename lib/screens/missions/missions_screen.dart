@@ -40,7 +40,7 @@ class _MissionsScreenState extends State<MissionsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg100,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('Missions', style: AppTextStyles.displayMD),
         bottom: TabBar(
@@ -116,17 +116,19 @@ class _MissionsList extends StatelessWidget {
                   label: Text(cat),
                   selected: isSelected,
                   onSelected: (_) => onCategoryChanged(cat),
-                  backgroundColor: AppColors.bg200,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   selectedColor: AppColors.neonBlue.withOpacity(0.15),
                   labelStyle: AppTextStyles.labelSM.copyWith(
                     color: isSelected
                         ? AppColors.neonBlue
-                        : AppColors.textSecondary,
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
                   ),
                   side: BorderSide(
                     color: isSelected
                         ? AppColors.neonBlue.withOpacity(0.5)
-                        : AppColors.glassBorder,
+                        : Theme.of(context).colorScheme.outline,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.full),
