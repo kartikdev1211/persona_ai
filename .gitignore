@@ -1,4 +1,5 @@
 # Miscellaneous
+docs/openapi.json
 *.class
 *.log
 *.pyc

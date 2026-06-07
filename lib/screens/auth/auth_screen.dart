@@ -1,11 +1,13 @@
 // lib/screens/auth/auth_screen.dart
 
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persona_ai/core/routes/app_routes.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
+import 'package:persona_ai/core/utils/ui_utils.dart';
 import 'package:persona_ai/screens/auth/bloc/bloc/auth_bloc.dart';
 import 'package:persona_ai/screens/auth/bloc/event/auth_event.dart';
 import 'package:persona_ai/screens/auth/bloc/state/auth_state.dart';
@@ -58,6 +60,7 @@ class _AuthScreenState extends State<AuthScreen>
           name: _nameCtrl.text,
           email: _emailCtrl.text,
           password: _passwordCtrl.text,
+          confirmPassword: _confirmCtrl.text,
         ),
       );
     }
@@ -82,15 +85,37 @@ class _AuthScreenState extends State<AuthScreen>
             prev.mode != curr.mode || prev.status != curr.status,
         listener: (context, state) {
           _onModeChange(state.mode);
+
+          if (state.status == AuthStatus.loading) {
+            UIUtils.showLoader(context);
+          } else {
+            UIUtils.hideLoader(context);
+          }
+
           if (state.status == AuthStatus.success) {
-            Navigator.of(context).pushReplacementNamed(AppRoutes.quiz);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              UIUtils.showSnackBar(
+                context: context,
+                title: 'Success',
+                message: state.mode == AuthMode.login
+                    ? 'Welcome back!'
+                    : 'Account created successfully!',
+                contentType: ContentType.success,
+              );
+            });
+            Future.delayed(const Duration(seconds: 2), () {
+              Navigator.of(context).pushReplacementNamed(AppRoutes.quiz);
+            });
           }
           if (state.status == AuthStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage ?? 'Authentication failed'),
-              ),
-            );
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              UIUtils.showSnackBar(
+                context: context,
+                title: 'Authentication Error',
+                message: state.errorMessage ?? 'Authentication failed',
+                contentType: ContentType.failure,
+              );
+            });
           }
         },
         builder: (context, state) {
@@ -197,7 +222,10 @@ class _AuthGlow extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
-            colors: [AppColors.neonBlue.withOpacity(0.1), Colors.transparent],
+            colors: [
+              AppColors.neonBlue.withValues(alpha: 0.1),
+              Colors.transparent,
+            ],
           ),
         ),
       ),

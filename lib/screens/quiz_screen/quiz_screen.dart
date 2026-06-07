@@ -1,11 +1,13 @@
 // lib/screens/quiz_screen/quiz_screen.dart
 
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persona_ai/core/routes/app_routes.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
+import 'package:persona_ai/core/utils/ui_utils.dart';
 import 'package:persona_ai/models/quiz/quiz_model.dart';
 import 'package:persona_ai/screens/quiz_screen/bloc/bloc/quiz_bloc.dart';
 import 'package:persona_ai/screens/quiz_screen/bloc/event/quiz_event.dart';
@@ -57,10 +59,39 @@ class _QuizScreenState extends State<QuizScreen>
       create: (context) => QuizBloc(),
       child: BlocConsumer<QuizBloc, QuizState>(
         listenWhen: (prev, curr) =>
-            prev.currentIndex != curr.currentIndex || curr.isCompleted,
+            prev.isLoading != curr.isLoading ||
+            prev.isCompleted != curr.isCompleted ||
+            prev.error != curr.error,
         listener: (context, state) {
+          if (state.isLoading) {
+            UIUtils.showLoader(context);
+          } else {
+            UIUtils.hideLoader(context);
+          }
+
           if (state.isCompleted) {
-            Navigator.of(context).pushReplacementNamed(AppRoutes.personaSetup);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              UIUtils.showSnackBar(
+                context: context,
+                title: 'Assessment Completed',
+                message: 'Your profile has been built successfully!',
+                contentType: ContentType.success,
+              );
+            });
+            Future.delayed(const Duration(seconds: 2), () {
+              Navigator.of(
+                context,
+              ).pushReplacementNamed(AppRoutes.personaSetup);
+            });
+          }
+
+          if (state.error != null) {
+            UIUtils.showSnackBar(
+              context: context,
+              title: 'Submission Failed',
+              message: state.error!,
+              contentType: ContentType.failure,
+            );
           }
         },
         builder: (context, state) {
@@ -276,7 +307,8 @@ class _QuizScreenState extends State<QuizScreen>
                         child: _NextButton(
                           label: state.isLast ? 'Build My Profile' : 'Next',
                           isLast: state.isLast,
-                          enabled: state.canProceed,
+                          isLoading: state.isLoading,
+                          enabled: state.canProceed && !state.isLoading,
                           onTap: () {
                             if (state.isLast) {
                               context.read<QuizBloc>().add(NextQuestion());
@@ -304,12 +336,14 @@ class _NextButton extends StatefulWidget {
   final String label;
   final bool isLast;
   final bool enabled;
+  final bool isLoading;
   final VoidCallback onTap;
 
   const _NextButton({
     required this.label,
     required this.isLast,
     required this.enabled,
+    this.isLoading = false,
     required this.onTap,
   });
 
@@ -381,34 +415,43 @@ class _NextButtonState extends State<_NextButton>
                 : [],
           ),
           child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  widget.label,
-                  style: AppTextStyles.titleMD.copyWith(
-                    color: widget.enabled
-                        ? AppColors.textInverse
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.4),
-                    fontWeight: FontWeight.w700,
+            child: widget.isLoading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(AppColors.textInverse),
+                    ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.label,
+                        style: AppTextStyles.titleMD.copyWith(
+                          color: widget.enabled
+                              ? AppColors.textInverse
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.4),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Icon(
+                        widget.isLast
+                            ? Icons.auto_awesome_rounded
+                            : Icons.arrow_forward_rounded,
+                        color: widget.enabled
+                            ? AppColors.textInverse
+                            : Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.4),
+                        size: 18,
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Icon(
-                  widget.isLast
-                      ? Icons.auto_awesome_rounded
-                      : Icons.arrow_forward_rounded,
-                  color: widget.enabled
-                      ? AppColors.textInverse
-                      : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.4),
-                  size: 18,
-                ),
-              ],
-            ),
           ),
         ),
       ),

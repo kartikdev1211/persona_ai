@@ -44,4 +44,12 @@ class StorageHelper {
   static void clearUserSession() {
     _userBox.erase();
   }
+
+  // --- Auth Tokens ---
+  static String get authToken => _userBox.read('authToken') ?? '';
+  static set authToken(String value) => _userBox.write('authToken', value);
+
+  static String get refreshToken => _userBox.read('refreshToken') ?? '';
+  static set refreshToken(String value) =>
+      _userBox.write('refreshToken', value);
 }

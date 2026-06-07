@@ -1,11 +1,14 @@
 // lib/screens/persona_setup/persona_setup_screen.dart
 
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:persona_ai/core/network/repository/persona_repository.dart';
 import 'package:persona_ai/core/routes/app_routes.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
+import 'package:persona_ai/core/utils/ui_utils.dart';
 import 'bloc/bloc/persona_setup_bloc.dart';
 import 'bloc/event/persona_setup_event.dart';
 import 'bloc/state/persona_setup_state.dart';
@@ -70,14 +73,47 @@ class _PersonaSetupScreenState extends State<PersonaSetupScreen>
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => PersonaSetupBloc(),
+      create: (context) =>
+          PersonaSetupBloc(personaRepository: PersonaRepository()),
       child: BlocConsumer<PersonaSetupBloc, PersonaSetupState>(
         listenWhen: (prev, curr) =>
-            prev.currentStep != curr.currentStep || curr.isCompleted,
+            prev.currentStep != curr.currentStep ||
+            prev.isLoading != curr.isLoading ||
+            curr.isCompleted ||
+            curr.errorMessage != null,
         listener: (context, state) {
-          if (state.isCompleted) {
-            Navigator.of(context).pushReplacementNamed(AppRoutes.personaReport);
+          if (state.isLoading) {
+            UIUtils.showLoader(context);
           } else {
+            UIUtils.hideLoader(context);
+          }
+
+          if (state.errorMessage != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              UIUtils.showSnackBar(
+                context: context,
+                title: 'Setup Error',
+                message: state.errorMessage!,
+                contentType: ContentType.failure,
+              );
+            });
+          }
+
+          if (state.isCompleted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              UIUtils.showSnackBar(
+                context: context,
+                title: 'Success!',
+                message: 'Your persona has been built successfully.',
+                contentType: ContentType.success,
+              );
+            });
+            Future.delayed(const Duration(seconds: 2), () {
+              Navigator.of(
+                context,
+              ).pushReplacementNamed(AppRoutes.personaReport);
+            });
+          } else if (state.currentStep.index != _pageCtrl.page?.round()) {
             _onStepChange(state.stepIndex);
           }
         },

@@ -17,11 +17,12 @@ class AuthState {
     AuthMode? mode,
     AuthStatus? status,
     String? errorMessage,
+    bool clearError = false,
   }) {
     return AuthState(
       mode: mode ?? this.mode,
       status: status ?? this.status,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 }

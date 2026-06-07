@@ -10,6 +10,7 @@ class PersonaSetupState {
   final int focusGoalIndex;
   final bool isLoading;
   final bool isCompleted;
+  final String? errorMessage;
 
   PersonaSetupState({
     this.currentStep = SetupStep.name,
@@ -19,6 +20,7 @@ class PersonaSetupState {
     this.focusGoalIndex = 0,
     this.isLoading = false,
     this.isCompleted = false,
+    this.errorMessage,
   });
 
   bool get isFirst => currentStep == SetupStep.name;
@@ -45,6 +47,7 @@ class PersonaSetupState {
     int? focusGoalIndex,
     bool? isLoading,
     bool? isCompleted,
+    String? errorMessage,
   }) {
     return PersonaSetupState(
       currentStep: currentStep ?? this.currentStep,
@@ -54,6 +57,7 @@ class PersonaSetupState {
       focusGoalIndex: focusGoalIndex ?? this.focusGoalIndex,
       isLoading: isLoading ?? this.isLoading,
       isCompleted: isCompleted ?? this.isCompleted,
+      errorMessage: errorMessage,
     );
   }
 }

@@ -1,12 +1,18 @@
 // lib/screens/persona_setup/bloc/bloc/persona_setup_bloc.dart
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:persona_ai/core/network/api_result.dart';
+import 'package:persona_ai/core/network/repository/persona_repository.dart';
 import 'package:persona_ai/core/storage/storage_helper.dart';
 import 'package:persona_ai/screens/persona_setup/bloc/event/persona_setup_event.dart';
 import 'package:persona_ai/screens/persona_setup/bloc/state/persona_setup_state.dart';
 
 class PersonaSetupBloc extends Bloc<PersonaSetupEvent, PersonaSetupState> {
-  PersonaSetupBloc() : super(PersonaSetupState()) {
+  final PersonaRepository _personaRepository;
+
+  PersonaSetupBloc({required PersonaRepository personaRepository})
+    : _personaRepository = personaRepository,
+      super(PersonaSetupState()) {
     on<NameChanged>((event, emit) {
       emit(state.copyWith(userName: event.name));
     });
@@ -38,16 +44,49 @@ class PersonaSetupBloc extends Bloc<PersonaSetupEvent, PersonaSetupState> {
     });
 
     on<FinishSetup>((event, emit) async {
-      emit(state.copyWith(isLoading: true));
+      emit(state.copyWith(isLoading: true, errorMessage: null));
 
-      // Persist data
-      StorageHelper.userName = state.userName;
-      StorageHelper.isPersonaSetupCompleted = true;
+      // Extract string labels for API
+      final confidenceLevels = [
+        'Beginner',
+        'Developing',
+        'Intermediate',
+        'Confident',
+        'Elite',
+      ];
+      final focusGoals = [
+        'Communication',
+        'Confidence',
+        'Self-Discipline',
+        'Social Skills',
+        'Grooming',
+        'Career Growth',
+      ];
 
-      // Simulate network/processing delay
-      await Future.delayed(const Duration(milliseconds: 1200));
+      final levelIndex = (state.confidenceLevel * 4).round().clamp(0, 4);
+      final confidenceLabel = confidenceLevels[levelIndex];
+      final focusGoalLabel = focusGoals[state.focusGoalIndex];
 
-      emit(state.copyWith(isLoading: false, isCompleted: true));
+      final result = await _personaRepository.setupPersona(
+        personaName: state.userName,
+        avatarIndex: state.avatarIndex,
+        confidenceLevel: confidenceLabel,
+        focusGoal: focusGoalLabel,
+      );
+
+      switch (result) {
+        case ApiSuccess(:final data):
+          // Persist data
+          StorageHelper.userName = state.userName;
+          StorageHelper.isPersonaSetupCompleted = data.personaSetupCompleted;
+
+          emit(state.copyWith(isLoading: false, isCompleted: true));
+
+        case ApiFailure(:final exception):
+          emit(
+            state.copyWith(isLoading: false, errorMessage: exception.message),
+          );
+      }
     });
   }
 }
