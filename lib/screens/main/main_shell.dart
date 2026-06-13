@@ -1,11 +1,14 @@
 // lib/screens/main/main_shell.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persona_ai/screens/home/home_screen.dart';
 import 'package:persona_ai/screens/coach/coach_screen.dart';
 import 'package:persona_ai/screens/missions/missions_screen.dart';
 import 'package:persona_ai/screens/progress/progress_screen.dart';
 import 'package:persona_ai/screens/profile/profile_screen.dart';
+import 'package:persona_ai/screens/profile/bloc/bloc/profile_bloc.dart';
+import 'package:persona_ai/screens/profile/bloc/event/profile_event.dart';
 import 'widget/app_bottom_nav.dart';
 
 // import '../missions/missions_screen.dart';
@@ -41,7 +44,13 @@ class _MainShellState extends State<MainShell> {
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
+        onTap: (i) {
+          setState(() => _currentIndex = i);
+          // Trigger profile fetch when switching to profile tab
+          if (i == 4) {
+            context.read<ProfileBloc>().add(const FetchProfile());
+          }
+        },
       ),
     );
   }

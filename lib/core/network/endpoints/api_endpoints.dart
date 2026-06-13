@@ -1,11 +1,12 @@
 class ApiEndpoints {
   // static const String baseUrl = "http://127.0.0.1:8000";
-  static const String baseUrl = "http://10.0.2.2:8000";
+  // static const String baseUrl = "http://10.0.2.2:8000";
+  static const String baseUrl = "https://persona-ai-backend-j5zn.onrender.com";
 
   // Auth
   static const String login = "/auth/login";
   static const String signup = "/auth/signup";
-  // static const String logout = "/auth/logout";
+  static const String logout = "/auth/logout";
   // static const String refreshToken = "/auth/refresh";
 
   // Assessment
@@ -13,8 +14,10 @@ class ApiEndpoints {
   static const String assessmentStatus = "/assessment/status";
   static const String assessmentMe = "/assessment/me";
   //
-  // // User
-  // static const String profile = "/user/profile";
+  // Profile
+  static const String getProfile = "/profile/me";
+  static const String updateNotifications = "/profile/notifications";
+  static const String deleteAccount = "/profile/delete-account";
   //
   // Persona
   static const String setupPersona = "/persona/setup";

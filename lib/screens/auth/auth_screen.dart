@@ -104,7 +104,8 @@ class _AuthScreenState extends State<AuthScreen>
               );
             });
             Future.delayed(const Duration(seconds: 2), () {
-              Navigator.of(context).pushReplacementNamed(AppRoutes.quiz);
+              // Redirect to splash to sync status and navigate correctly
+              Navigator.of(context).pushReplacementNamed(AppRoutes.splash);
             });
           }
           if (state.status == AuthStatus.failure) {

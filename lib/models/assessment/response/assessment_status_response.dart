@@ -7,7 +7,17 @@ class AssessmentStatusResponse {
   @JsonKey(name: 'assessment_completed')
   final bool assessmentCompleted;
 
-  const AssessmentStatusResponse({required this.assessmentCompleted});
+  @JsonKey(name: 'is_persona_setup_completed')
+  final bool isPersonaSetupCompleted;
+
+  @JsonKey(name: 'is_report_generated')
+  final bool isReportGenerated;
+
+  const AssessmentStatusResponse({
+    required this.assessmentCompleted,
+    required this.isPersonaSetupCompleted,
+    required this.isReportGenerated,
+  });
 
   factory AssessmentStatusResponse.fromJson(Map<String, dynamic> json) =>
       _$AssessmentStatusResponseFromJson(json);

@@ -49,6 +49,7 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
+    await safeApiCall(() => _client.logout());
     await StorageHelper.clearUserSession();
   }
 }

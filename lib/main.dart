@@ -2,9 +2,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:persona_ai/core/network/repository/persona_repository.dart';
+import 'package:persona_ai/core/network/repository/profile_repository.dart';
 import 'package:persona_ai/core/routes/app_routes.dart';
 import 'package:persona_ai/core/storage/storage_helper.dart';
 import 'package:persona_ai/core/theme/theme_bloc.dart';
+import 'package:persona_ai/screens/profile/bloc/bloc/profile_bloc.dart';
+import 'package:persona_ai/screens/profile/bloc/event/profile_event.dart';
 import 'core/theme/app_theme.dart';
 
 void main() async {
@@ -18,8 +22,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => ThemeBloc(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => ThemeBloc()),
+        BlocProvider(
+          create: (context) => ProfileBloc(
+            repository: ProfileRepository(),
+            personaRepository: PersonaRepository(),
+          )..add(const FetchProfile()),
+        ),
+      ],
       child: BlocBuilder<ThemeBloc, ThemeMode>(
         builder: (context, mode) {
           return MaterialApp(

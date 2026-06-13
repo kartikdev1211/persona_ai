@@ -13,6 +13,9 @@ import 'package:persona_ai/models/persona/request/persona_setup_request.dart';
 import 'package:persona_ai/models/persona/response/persona_setup_response.dart';
 import 'package:persona_ai/models/persona/response/persona_response.dart';
 import 'package:persona_ai/models/persona/response/persona_report_response.dart';
+import 'package:persona_ai/models/profile/response/profile_response.dart';
+import 'package:persona_ai/models/profile/request/update_notification_request.dart';
+import 'package:persona_ai/models/profile/request/delete_account_request.dart';
 import 'package:retrofit/retrofit.dart';
 
 part 'api_client.g.dart';
@@ -29,6 +32,9 @@ abstract class ApiClient {
 
   @POST(ApiEndpoints.signup)
   Future<SignupResponse> signup(@Body() SignupRequest body);
+
+  @POST(ApiEndpoints.logout)
+  Future<void> logout();
 
   // ─── Assessment ─────────────────────────────
   @POST(ApiEndpoints.submitAssessment)
@@ -57,6 +63,16 @@ abstract class ApiClient {
 
   @GET(ApiEndpoints.personaReport)
   Future<PersonaReportResponse> getPersonaReport();
+
+  // ─── Profile ────────────────────────────────
+  @GET(ApiEndpoints.getProfile)
+  Future<ProfileResponse> getProfile();
+
+  @PATCH(ApiEndpoints.updateNotifications)
+  Future<void> updateNotifications(@Body() UpdateNotificationRequest body);
+
+  @DELETE(ApiEndpoints.deleteAccount)
+  Future<void> deleteAccount(@Body() DeleteAccountRequest body);
 
   // @POST(ApiEndpoints.logout)
   // Future<void> logout();
