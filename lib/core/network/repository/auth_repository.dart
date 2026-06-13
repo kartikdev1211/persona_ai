@@ -15,8 +15,8 @@ class AuthRepository {
     required String email,
     required String password,
     required String confirmPassword,
-  }) {
-    return safeApiCall(
+  }) async {
+    final result = await safeApiCall(
       () => _client.signup(
         SignupRequest(
           fullName: fullName,
@@ -26,6 +26,12 @@ class AuthRepository {
         ),
       ),
     );
+    if (result case ApiSuccess(:final data)) {
+      await StorageHelper.saveAuthToken(data.accessToken);
+      StorageHelper.isLoggedIn = true;
+      StorageHelper.userName = data.fullName;
+    }
+    return result;
   }
 
   Future<ApiResult<LoginResponse>> login({
@@ -36,13 +42,13 @@ class AuthRepository {
       () => _client.login(LoginRequest(email: email, password: password)),
     );
     if (result case ApiSuccess(:final data)) {
-      StorageHelper.authToken = data.accessToken;
+      await StorageHelper.saveAuthToken(data.accessToken);
       StorageHelper.isLoggedIn = true;
     }
     return result;
   }
 
-  void logout() {
-    StorageHelper.clearUserSession();
+  Future<void> logout() async {
+    await StorageHelper.clearUserSession();
   }
 }

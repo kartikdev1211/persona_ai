@@ -12,6 +12,7 @@ import 'package:persona_ai/models/assessment/response/assessment_response.dart';
 import 'package:persona_ai/models/persona/request/persona_setup_request.dart';
 import 'package:persona_ai/models/persona/response/persona_setup_response.dart';
 import 'package:persona_ai/models/persona/response/persona_response.dart';
+import 'package:persona_ai/models/persona/response/persona_report_response.dart';
 import 'package:retrofit/retrofit.dart';
 
 part 'api_client.g.dart';
@@ -50,6 +51,12 @@ abstract class ApiClient {
 
   @GET(ApiEndpoints.personaMe)
   Future<PersonaResponse> getMyPersona();
+
+  @POST(ApiEndpoints.generateReport)
+  Future<PersonaReportResponse> generateReport();
+
+  @GET(ApiEndpoints.personaReport)
+  Future<PersonaReportResponse> getPersonaReport();
 
   // @POST(ApiEndpoints.logout)
   // Future<void> logout();

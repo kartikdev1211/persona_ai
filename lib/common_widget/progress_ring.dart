@@ -38,7 +38,10 @@ class ProgressRing extends StatelessWidget {
               strokeCap: StrokeCap.round,
             ),
           ),
-          if (center != null) center!,
+          if (center != null)
+            Center(
+              child: FittedBox(fit: BoxFit.scaleDown, child: center!),
+            ),
         ],
       ),
     );

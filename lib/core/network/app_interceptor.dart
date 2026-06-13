@@ -5,8 +5,11 @@ import 'package:persona_ai/core/storage/storage_helper.dart';
 
 class AppInterceptor extends Interceptor {
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final token = StorageHelper.authToken;
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final token = await StorageHelper.getAuthToken();
     if (token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }

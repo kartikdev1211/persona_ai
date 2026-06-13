@@ -38,11 +38,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
-            onPressed: () {
-              StorageHelper.clearUserSession();
-              Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil(AppRoutes.onboarding, (route) => false);
+            onPressed: () async {
+              await StorageHelper.clearUserSession();
+              if (mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  AppRoutes.onboarding,
+                  (route) => false,
+                );
+              }
             },
             child: const Text('Delete'),
           ),
@@ -298,11 +301,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.logout_rounded,
                   title: 'Log Out',
                   color: AppColors.textDisabled,
-                  onTap: () {
+                  onTap: () async {
                     StorageHelper.isLoggedIn = false;
-                    Navigator.of(
-                      context,
-                    ).pushNamedAndRemoveUntil(AppRoutes.auth, (route) => false);
+                    await StorageHelper.clearUserSession();
+                    if (mounted) {
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        AppRoutes.auth,
+                        (route) => false,
+                      );
+                    }
                   },
                 ),
 

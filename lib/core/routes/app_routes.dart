@@ -1,11 +1,14 @@
 // lib/core/routes/app_routes.dart
 
 import 'package:flutter/material.dart';
+import 'package:persona_ai/core/network/repository/persona_repository.dart';
 import 'package:persona_ai/screens/auth/auth_screen.dart';
 import 'package:persona_ai/screens/main/main_shell.dart';
 import 'package:persona_ai/screens/onboarding/onboarding_screen.dart';
 import 'package:persona_ai/screens/persona_setup/persona_report_screen.dart';
 import 'package:persona_ai/screens/persona_setup/persona_setup_screen.dart';
+import 'package:persona_ai/screens/persona_setup/report_bloc/bloc/persona_report_bloc.dart';
+import 'package:persona_ai/screens/persona_setup/report_bloc/event/persona_report_event.dart';
 import 'package:persona_ai/screens/profile/edit_profile_screen.dart';
 import 'package:persona_ai/screens/profile/personality/archetype_detail_screen.dart';
 import 'package:persona_ai/screens/profile/personality/experience_detail_screen.dart';
@@ -13,6 +16,7 @@ import 'package:persona_ai/screens/profile/personality/focus_detail_screen.dart'
 import 'package:persona_ai/screens/profile/profile_detail_screen.dart';
 import 'package:persona_ai/screens/quiz_screen/quiz_screen.dart';
 import 'package:persona_ai/screens/splash/splash_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AppRoutes {
   // Route Names
@@ -36,7 +40,12 @@ class AppRoutes {
     auth: (_) => const AuthScreen(),
     quiz: (_) => const QuizScreen(),
     personaSetup: (_) => const PersonaSetupScreen(),
-    personaReport: (_) => const PersonaReportScreen(),
+    personaReport: (_) => BlocProvider(
+      create: (context) =>
+          PersonaReportBloc(personaRepository: PersonaRepository())
+            ..add(const GenerateReport()),
+      child: const PersonaReportScreen(),
+    ),
     profileDetail: (_) => const ProfileDetailScreen(),
     editProfile: (_) => const EditProfileScreen(),
     archetype: (_) => const ArchetypeDetailScreen(),

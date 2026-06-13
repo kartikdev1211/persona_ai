@@ -1,9 +1,11 @@
 import 'package:get_storage/get_storage.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class StorageHelper {
   // Separate containers for System and User data
   static final GetStorage _systemBox = GetStorage('SystemStorage');
   static final GetStorage _userBox = GetStorage('UserStorage');
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   static Future<void> init() async {
     await GetStorage.init('SystemStorage');
@@ -41,15 +43,25 @@ class StorageHelper {
   static set userName(String value) => _userBox.write('userName', value);
 
   // Clear user data on logout but keep system settings
-  static void clearUserSession() {
-    _userBox.erase();
+  static Future<void> clearUserSession() async {
+    await _userBox.erase();
+    await _secureStorage.deleteAll();
   }
 
-  // --- Auth Tokens ---
-  static String get authToken => _userBox.read('authToken') ?? '';
-  static set authToken(String value) => _userBox.write('authToken', value);
+  // --- Auth Tokens (Securely stored) ---
+  static Future<String> getAuthToken() async {
+    return await _secureStorage.read(key: 'authToken') ?? '';
+  }
 
-  static String get refreshToken => _userBox.read('refreshToken') ?? '';
-  static set refreshToken(String value) =>
-      _userBox.write('refreshToken', value);
+  static Future<void> saveAuthToken(String value) async {
+    await _secureStorage.write(key: 'authToken', value: value);
+  }
+
+  static Future<String> getRefreshToken() async {
+    return await _secureStorage.read(key: 'refreshToken') ?? '';
+  }
+
+  static Future<void> saveRefreshToken(String value) async {
+    await _secureStorage.write(key: 'refreshToken', value: value);
+  }
 }

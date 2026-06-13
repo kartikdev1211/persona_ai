@@ -4,7 +4,11 @@ part 'signup_response.g.dart';
 
 @JsonSerializable()
 class SignupResponse {
-  final int id;
+  @JsonKey(name: 'access_token')
+  final String accessToken;
+
+  @JsonKey(name: 'token_type')
+  final String tokenType;
 
   @JsonKey(name: 'full_name')
   final String fullName;
@@ -12,7 +16,8 @@ class SignupResponse {
   final String email;
 
   const SignupResponse({
-    required this.id,
+    required this.accessToken,
+    required this.tokenType,
     required this.fullName,
     required this.email,
   });
