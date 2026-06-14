@@ -9,7 +9,7 @@ part of 'profile_response.dart';
 ProfileResponse _$ProfileResponseFromJson(Map<String, dynamic> json) =>
     ProfileResponse(
       fullName: json['full_name'] as String,
-      avatarIndex: (json['avatar_index'] as num).toInt(),
+      avatarUrl: json['avatar_url'] as String?,
       confidenceScore: (json['confidence_score'] as num).toInt(),
       notificationsEnabled: json['notifications_enabled'] as bool,
       level: (json['level'] as num).toInt(),
@@ -25,7 +25,7 @@ ProfileResponse _$ProfileResponseFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$ProfileResponseToJson(ProfileResponse instance) =>
     <String, dynamic>{
       'full_name': instance.fullName,
-      'avatar_index': instance.avatarIndex,
+      'avatar_url': instance.avatarUrl,
       'confidence_score': instance.confidenceScore,
       'notifications_enabled': instance.notificationsEnabled,
       'level': instance.level,

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -89,6 +90,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         final user = state.profile;
+        final persona = state.persona;
         if (user == null) {
           return const Scaffold(
             body: Center(child: Text('Failed to load profile')),
@@ -122,7 +124,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           const SizedBox(height: 40),
                           Container(
-                            padding: const EdgeInsets.all(20),
+                            width: 100,
+                            height: 100,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Theme.of(context).colorScheme.surface,
@@ -131,10 +134,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 width: 2,
                               ),
                             ),
-                            child: const Icon(
-                              Icons.person,
-                              size: 40,
-                              color: AppColors.neonBlue,
+                            child: ClipOval(
+                              child: user.avatarUrl != null
+                                  ? CachedNetworkImage(
+                                      imageUrl: user.avatarUrl!,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) =>
+                                          const Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                      errorWidget: (context, url, error) =>
+                                          const Icon(
+                                            Icons.person,
+                                            size: 40,
+                                            color: AppColors.neonBlue,
+                                          ),
+                                    )
+                                  : const Icon(
+                                      Icons.person,
+                                      size: 40,
+                                      color: AppColors.neonBlue,
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -271,6 +293,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               },
                             ),
                           ),
+
+                    const SizedBox(height: AppSpacing.xl2),
+
+                    Text(
+                      'Personality Attributes',
+                      style: AppTextStyles.titleSM.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SettingsTile(
+                      icon: Icons.auto_awesome_rounded,
+                      title: 'Persona Name',
+                      trailing: Text(
+                        persona?.personaName ?? 'Not Set',
+                        style: AppTextStyles.labelSM.copyWith(
+                          color: AppColors.neonBlue,
+                        ),
+                      ),
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.profileDetail),
+                    ),
+                    SettingsTile(
+                      icon: Icons.trending_up_rounded,
+                      title: 'Primary Focus',
+                      trailing: Text(
+                        persona?.focusGoal ?? 'Growth',
+                        style: AppTextStyles.labelSM.copyWith(
+                          color: AppColors.neonBlue,
+                        ),
+                      ),
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.profileDetail),
+                    ),
+                    SettingsTile(
+                      icon: Icons.military_tech_rounded,
+                      title: 'Confidence Level',
+                      trailing: Text(
+                        persona?.confidenceLevel ?? 'Beginner',
+                        style: AppTextStyles.labelSM.copyWith(
+                          color: AppColors.neonBlue,
+                        ),
+                      ),
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.profileDetail),
+                    ),
 
                     const SizedBox(height: AppSpacing.xl2),
 

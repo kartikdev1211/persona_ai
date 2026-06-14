@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:persona_ai/core/network/api_client.dart';
 import 'package:persona_ai/core/network/api_result.dart';
 import 'package:persona_ai/models/persona/request/persona_setup_request.dart';
 import 'package:persona_ai/models/persona/response/persona_response.dart';
 import 'package:persona_ai/models/persona/response/persona_setup_response.dart';
 import 'package:persona_ai/models/persona/response/persona_report_response.dart';
+import 'package:persona_ai/models/persona/response/avatar_upload_response.dart';
 
 class PersonaRepository {
   final ApiClient _client;
@@ -12,7 +15,7 @@ class PersonaRepository {
 
   Future<ApiResult<PersonaSetupResponse>> setupPersona({
     required String personaName,
-    required int avatarIndex,
+    String? avatarUrl,
     required String confidenceLevel,
     required String focusGoal,
   }) {
@@ -20,12 +23,16 @@ class PersonaRepository {
       () => _client.setupPersona(
         PersonaSetupRequest(
           personaName: personaName,
-          avatarIndex: avatarIndex,
+          avatarUrl: avatarUrl,
           confidenceLevel: confidenceLevel,
           focusGoal: focusGoal,
         ),
       ),
     );
+  }
+
+  Future<ApiResult<AvatarUploadResponse>> uploadAvatar(File file) {
+    return safeApiCall(() => _client.uploadAvatar(file));
   }
 
   Future<ApiResult<PersonaSetupResponse>> getPersonaStatus() {

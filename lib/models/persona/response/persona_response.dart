@@ -7,8 +7,8 @@ class PersonaResponse {
   @JsonKey(name: 'persona_name')
   final String personaName;
 
-  @JsonKey(name: 'avatar_index')
-  final int avatarIndex;
+  @JsonKey(name: 'avatar_url')
+  final String? avatarUrl;
 
   @JsonKey(name: 'confidence_level')
   final String confidenceLevel;
@@ -18,7 +18,7 @@ class PersonaResponse {
 
   const PersonaResponse({
     required this.personaName,
-    required this.avatarIndex,
+    this.avatarUrl,
     required this.confidenceLevel,
     required this.focusGoal,
   });
@@ -27,4 +27,18 @@ class PersonaResponse {
       _$PersonaResponseFromJson(json);
 
   Map<String, dynamic> toJson() => _$PersonaResponseToJson(this);
+
+  PersonaResponse copyWith({
+    String? personaName,
+    String? avatarUrl,
+    String? confidenceLevel,
+    String? focusGoal,
+  }) {
+    return PersonaResponse(
+      personaName: personaName ?? this.personaName,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      confidenceLevel: confidenceLevel ?? this.confidenceLevel,
+      focusGoal: focusGoal ?? this.focusGoal,
+    );
+  }
 }

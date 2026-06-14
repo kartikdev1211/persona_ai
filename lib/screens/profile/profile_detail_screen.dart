@@ -1,18 +1,101 @@
 // lib/screens/profile/profile_detail_screen.dart
 
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:persona_ai/common_widget/glass_card.dart';
 import 'package:persona_ai/core/routes/app_routes.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
 import 'package:persona_ai/screens/profile/bloc/bloc/profile_bloc.dart';
+import 'package:persona_ai/screens/profile/bloc/event/profile_event.dart';
 import 'package:persona_ai/screens/profile/bloc/state/profile_state.dart';
 import 'package:persona_ai/screens/profile/widgets/profile_detail_widgets.dart';
 
 class ProfileDetailScreen extends StatelessWidget {
   const ProfileDetailScreen({super.key});
+
+  Future<void> _pickImage(BuildContext context, ImageSource source) async {
+    PermissionStatus status;
+    if (source == ImageSource.camera) {
+      status = await Permission.camera.request();
+    } else {
+      // For gallery, it depends on Android version.
+      // On many devices, image_picker handles this or it doesn't need explicit 'photos' permission.
+      // However, we check storage/photos for safety.
+      if (Platform.isAndroid) {
+        status = await Permission.storage.request();
+      } else {
+        status = await Permission.photos.request();
+      }
+    }
+
+    if (status.isGranted || status.isLimited || !Platform.isAndroid) {
+      // On Android, sometimes status might not be 'granted' but picker still works for gallery
+      // So we proceed if it's not permanently denied, or just let image_picker handle its own errors.
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: source,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 85,
+      );
+
+      if (image != null && context.mounted) {
+        context.read<ProfileBloc>().add(UpdateAvatar(image.path));
+      }
+    } else if (status.isPermanentlyDenied && context.mounted) {
+      openAppSettings();
+    }
+  }
+
+  void _showImageSourceActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetContext) => Container(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Update Profile Picture', style: AppTextStyles.titleMD),
+            const SizedBox(height: AppSpacing.xl),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _ImageSourceButton(
+                  icon: Icons.camera_alt_rounded,
+                  label: 'Camera',
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    _pickImage(context, ImageSource.camera);
+                  },
+                ),
+                _ImageSourceButton(
+                  icon: Icons.photo_library_rounded,
+                  label: 'Gallery',
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    _pickImage(context, ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xl),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +135,8 @@ class ProfileDetailScreen extends StatelessWidget {
                   child: Stack(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(32),
+                        width: 140,
+                        height: 140,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.bg300,
@@ -67,25 +151,57 @@ class ProfileDetailScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.person,
-                          size: 64,
-                          color: AppColors.neonBlue,
+                        child: ClipOval(
+                          child: profile.avatarUrl != null
+                              ? CachedNetworkImage(
+                                  imageUrl: profile.avatarUrl!,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(
+                                        Icons.person,
+                                        size: 64,
+                                        color: AppColors.neonBlue,
+                                      ),
+                                )
+                              : const Icon(
+                                  Icons.person,
+                                  size: 64,
+                                  color: AppColors.neonBlue,
+                                ),
                         ),
                       ),
                       Positioned(
                         bottom: 10,
                         right: 10,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: AppColors.neonBlue,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            size: 18,
-                            color: AppColors.textInverse,
+                        child: GestureDetector(
+                          onTap: () => _showImageSourceActionSheet(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: AppColors.neonBlue,
+                              shape: BoxShape.circle,
+                            ),
+                            child: state.status == ProfileStatus.updating
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.camera_alt_rounded,
+                                    size: 18,
+                                    color: AppColors.textInverse,
+                                  ),
                           ),
                         ),
                       ),
@@ -153,6 +269,14 @@ class ProfileDetailScreen extends StatelessWidget {
                       const ProfileDetailDivider(),
                       ProfileDetailItem(
                         icon: Icons.military_tech_rounded,
+                        label: 'Confidence Level',
+                        value: persona?.confidenceLevel ?? 'Beginner',
+                        onTap: () =>
+                            Navigator.pushNamed(context, AppRoutes.experience),
+                      ),
+                      const ProfileDetailDivider(),
+                      ProfileDetailItem(
+                        icon: Icons.workspace_premium_rounded,
                         label: 'Experience Level',
                         value: 'Level ${profile.level}',
                         onTap: () =>
@@ -195,6 +319,42 @@ class ProfileDetailScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _ImageSourceButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ImageSourceButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            decoration: BoxDecoration(
+              color: AppColors.bg300,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: AppColors.neonBlue.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Icon(icon, color: AppColors.neonBlue, size: 32),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: AppTextStyles.labelLG),
+        ],
+      ),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:persona_ai/core/network/dio_client.dart';
 import 'package:persona_ai/core/network/endpoints/api_endpoints.dart';
@@ -13,10 +15,12 @@ import 'package:persona_ai/models/persona/request/persona_setup_request.dart';
 import 'package:persona_ai/models/persona/response/persona_setup_response.dart';
 import 'package:persona_ai/models/persona/response/persona_response.dart';
 import 'package:persona_ai/models/persona/response/persona_report_response.dart';
+import 'package:persona_ai/models/persona/response/avatar_upload_response.dart';
 import 'package:persona_ai/models/profile/response/profile_response.dart';
 import 'package:persona_ai/models/profile/request/update_notification_request.dart';
 import 'package:persona_ai/models/profile/request/delete_account_request.dart';
 import 'package:retrofit/retrofit.dart';
+import 'package:http_parser/http_parser.dart';
 
 part 'api_client.g.dart';
 
@@ -51,6 +55,10 @@ abstract class ApiClient {
   // ─── Persona ────────────────────────────────
   @POST(ApiEndpoints.setupPersona)
   Future<PersonaSetupResponse> setupPersona(@Body() PersonaSetupRequest body);
+
+  @POST(ApiEndpoints.uploadAvatar)
+  @MultiPart()
+  Future<AvatarUploadResponse> uploadAvatar(@Part(name: "file") File file);
 
   @GET(ApiEndpoints.personaStatus)
   Future<PersonaSetupResponse> getPersonaStatus();

@@ -7,9 +7,9 @@ class NameChanged extends PersonaSetupEvent {
   NameChanged(this.name);
 }
 
-class AvatarChanged extends PersonaSetupEvent {
-  final int index;
-  AvatarChanged(this.index);
+class ImageSelected extends PersonaSetupEvent {
+  final String path;
+  ImageSelected(this.path);
 }
 
 class ConfidenceChanged extends PersonaSetupEvent {

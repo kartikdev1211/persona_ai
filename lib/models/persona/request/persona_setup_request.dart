@@ -7,8 +7,8 @@ class PersonaSetupRequest {
   @JsonKey(name: 'persona_name')
   final String personaName;
 
-  @JsonKey(name: 'avatar_index')
-  final int avatarIndex;
+  @JsonKey(name: 'avatar_url')
+  final String? avatarUrl;
 
   @JsonKey(name: 'confidence_level')
   final String confidenceLevel;
@@ -18,7 +18,7 @@ class PersonaSetupRequest {
 
   const PersonaSetupRequest({
     required this.personaName,
-    required this.avatarIndex,
+    this.avatarUrl,
     required this.confidenceLevel,
     required this.focusGoal,
   });

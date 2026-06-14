@@ -1,5 +1,7 @@
 // lib/screens/persona_setup/bloc/bloc/persona_setup_bloc.dart
 
+import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persona_ai/core/network/api_result.dart';
 import 'package:persona_ai/core/network/repository/persona_repository.dart';
@@ -17,8 +19,8 @@ class PersonaSetupBloc extends Bloc<PersonaSetupEvent, PersonaSetupState> {
       emit(state.copyWith(userName: event.name));
     });
 
-    on<AvatarChanged>((event, emit) {
-      emit(state.copyWith(avatarIndex: event.index));
+    on<ImageSelected>((event, emit) {
+      emit(state.copyWith(selectedImagePath: event.path));
     });
 
     on<ConfidenceChanged>((event, emit) {
@@ -46,6 +48,24 @@ class PersonaSetupBloc extends Bloc<PersonaSetupEvent, PersonaSetupState> {
     on<FinishSetup>((event, emit) async {
       emit(state.copyWith(isLoading: true, errorMessage: null));
 
+      String? uploadedUrl = state.avatarUrl;
+
+      // 1. Upload image if selected and not yet uploaded
+      if (state.selectedImagePath != null && uploadedUrl == null) {
+        final uploadResult = await _personaRepository.uploadAvatar(
+          File(state.selectedImagePath!),
+        );
+        switch (uploadResult) {
+          case ApiSuccess(:final data):
+            uploadedUrl = data.avatarUrl;
+          case ApiFailure(:final exception):
+            emit(
+              state.copyWith(isLoading: false, errorMessage: exception.message),
+            );
+            return;
+        }
+      }
+
       // Extract string labels for API
       final confidenceLevels = [
         'Beginner',
@@ -69,7 +89,7 @@ class PersonaSetupBloc extends Bloc<PersonaSetupEvent, PersonaSetupState> {
 
       final result = await _personaRepository.setupPersona(
         personaName: state.userName,
-        avatarIndex: state.avatarIndex,
+        avatarUrl: uploadedUrl,
         confidenceLevel: confidenceLabel,
         focusGoal: focusGoalLabel,
       );

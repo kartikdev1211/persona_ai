@@ -5,7 +5,8 @@ enum SetupStep { name, avatar, confidence, focus }
 class PersonaSetupState {
   final SetupStep currentStep;
   final String userName;
-  final int avatarIndex;
+  final String? selectedImagePath;
+  final String? avatarUrl;
   final double confidenceLevel;
   final int focusGoalIndex;
   final bool isLoading;
@@ -15,7 +16,8 @@ class PersonaSetupState {
   PersonaSetupState({
     this.currentStep = SetupStep.name,
     this.userName = '',
-    this.avatarIndex = 0,
+    this.selectedImagePath,
+    this.avatarUrl,
     this.confidenceLevel = 0.5,
     this.focusGoalIndex = 0,
     this.isLoading = false,
@@ -33,6 +35,7 @@ class PersonaSetupState {
       case SetupStep.name:
         return userName.trim().length >= 2;
       case SetupStep.avatar:
+        return selectedImagePath != null;
       case SetupStep.confidence:
       case SetupStep.focus:
         return true;
@@ -42,7 +45,8 @@ class PersonaSetupState {
   PersonaSetupState copyWith({
     SetupStep? currentStep,
     String? userName,
-    int? avatarIndex,
+    String? selectedImagePath,
+    String? avatarUrl,
     double? confidenceLevel,
     int? focusGoalIndex,
     bool? isLoading,
@@ -52,7 +56,8 @@ class PersonaSetupState {
     return PersonaSetupState(
       currentStep: currentStep ?? this.currentStep,
       userName: userName ?? this.userName,
-      avatarIndex: avatarIndex ?? this.avatarIndex,
+      selectedImagePath: selectedImagePath ?? this.selectedImagePath,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
       confidenceLevel: confidenceLevel ?? this.confidenceLevel,
       focusGoalIndex: focusGoalIndex ?? this.focusGoalIndex,
       isLoading: isLoading ?? this.isLoading,

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persona_ai/core/network/api_result.dart';
 import 'package:persona_ai/core/network/repository/persona_repository.dart';
@@ -19,6 +21,72 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<FetchProfile>(_onFetchProfile);
     on<UpdateNotificationPreference>(_onUpdateNotifications);
     on<DeleteAccountRequested>(_onDeleteAccount);
+    on<UpdateAvatar>(_onUpdateAvatar);
+  }
+
+  Future<void> _onUpdateAvatar(
+    UpdateAvatar event,
+    Emitter<ProfileState> emit,
+  ) async {
+    emit(state.copyWith(status: ProfileStatus.updating));
+
+    // 1. Upload the image
+    final uploadResult = await _personaRepository.uploadAvatar(
+      File(event.imagePath),
+    );
+
+    if (uploadResult is ApiFailure) {
+      emit(
+        state.copyWith(
+          status: ProfileStatus.failure,
+          errorMessage: (uploadResult as ApiFailure).exception.message,
+        ),
+      );
+      return;
+    }
+
+    final avatarUrl = (uploadResult as ApiSuccess).data.avatarUrl;
+
+    // 2. Update persona with new avatarUrl
+    // We need existing persona details to call setupPersona (which acts as update)
+    final persona = state.persona;
+    if (persona == null) {
+      emit(
+        state.copyWith(
+          status: ProfileStatus.failure,
+          errorMessage: "Persona data not loaded",
+        ),
+      );
+      return;
+    }
+
+    final setupResult = await _personaRepository.setupPersona(
+      personaName: persona.personaName,
+      avatarUrl: avatarUrl,
+      confidenceLevel: persona.confidenceLevel,
+      focusGoal: persona.focusGoal,
+    );
+
+    switch (setupResult) {
+      case ApiSuccess():
+        // Optimistically update profile and persona in state
+        final updatedProfile = state.profile?.copyWith(avatarUrl: avatarUrl);
+        final updatedPersona = persona.copyWith(avatarUrl: avatarUrl);
+        emit(
+          state.copyWith(
+            status: ProfileStatus.success,
+            profile: updatedProfile,
+            persona: updatedPersona,
+          ),
+        );
+      case ApiFailure(:final exception):
+        emit(
+          state.copyWith(
+            status: ProfileStatus.failure,
+            errorMessage: exception.message,
+          ),
+        );
+    }
   }
 
   Future<void> _onFetchProfile(
@@ -123,7 +191,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 extension ProfileResponseExtension on ProfileResponse {
   ProfileResponse copyWith({
     String? fullName,
-    int? avatarIndex,
+    String? avatarUrl,
     int? confidenceScore,
     bool? notificationsEnabled,
     int? level,
@@ -135,7 +203,7 @@ extension ProfileResponseExtension on ProfileResponse {
   }) {
     return ProfileResponse(
       fullName: fullName ?? this.fullName,
-      avatarIndex: avatarIndex ?? this.avatarIndex,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
       confidenceScore: confidenceScore ?? this.confidenceScore,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       level: level ?? this.level,

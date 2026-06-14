@@ -26,3 +26,11 @@ class DeleteAccountRequested extends ProfileEvent {
   @override
   List<Object?> get props => [password];
 }
+
+class UpdateAvatar extends ProfileEvent {
+  final String imagePath;
+  const UpdateAvatar(this.imagePath);
+
+  @override
+  List<Object?> get props => [imagePath];
+}

@@ -9,7 +9,7 @@ part of 'persona_response.dart';
 PersonaResponse _$PersonaResponseFromJson(Map<String, dynamic> json) =>
     PersonaResponse(
       personaName: json['persona_name'] as String,
-      avatarIndex: (json['avatar_index'] as num).toInt(),
+      avatarUrl: json['avatar_url'] as String?,
       confidenceLevel: json['confidence_level'] as String,
       focusGoal: json['focus_goal'] as String,
     );
@@ -17,7 +17,7 @@ PersonaResponse _$PersonaResponseFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$PersonaResponseToJson(PersonaResponse instance) =>
     <String, dynamic>{
       'persona_name': instance.personaName,
-      'avatar_index': instance.avatarIndex,
+      'avatar_url': instance.avatarUrl,
       'confidence_level': instance.confidenceLevel,
       'focus_goal': instance.focusGoal,
     };

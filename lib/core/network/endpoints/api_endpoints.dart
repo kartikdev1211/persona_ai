@@ -21,6 +21,7 @@ class ApiEndpoints {
   //
   // Persona
   static const String setupPersona = "/persona/setup";
+  static const String uploadAvatar = "/persona/avatar";
   static const String personaStatus = "/persona/status";
   static const String personaMe = "/persona/me";
   static const String personaReport = "/persona/report";

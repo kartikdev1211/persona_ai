@@ -7,8 +7,8 @@ class ProfileResponse {
   @JsonKey(name: 'full_name')
   final String fullName;
 
-  @JsonKey(name: 'avatar_index')
-  final int avatarIndex;
+  @JsonKey(name: 'avatar_url')
+  final String? avatarUrl;
 
   @JsonKey(name: 'confidence_score')
   final int confidenceScore;
@@ -33,7 +33,7 @@ class ProfileResponse {
 
   const ProfileResponse({
     required this.fullName,
-    required this.avatarIndex,
+    this.avatarUrl,
     required this.confidenceScore,
     required this.notificationsEnabled,
     required this.level,

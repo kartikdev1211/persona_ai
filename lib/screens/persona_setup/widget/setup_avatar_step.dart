@@ -1,7 +1,10 @@
 // lib/screens/persona_setup/widget/setup_avatar_step.dart
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:persona_ai/core/theme/app_colors.dart';
 import 'package:persona_ai/core/theme/app_text_styles.dart';
 import 'package:persona_ai/core/theme/spacing.dart';
@@ -10,98 +13,136 @@ import '../bloc/event/persona_setup_event.dart';
 import '../bloc/state/persona_setup_state.dart';
 import 'setup_name_step.dart';
 
-// Each avatar is an emoji + gradient combo
-const _kAvatars = [
-  (emoji: '🧑‍💻', colors: AppColors.primaryGradient),
-  (emoji: '🦁', colors: AppColors.amberGradient),
-  (emoji: '🥷', colors: AppColors.primaryGradient),
-  (emoji: '🧠', colors: AppColors.greenGradient),
-  (emoji: '🚀', colors: AppColors.primaryGradient),
-  (emoji: '🎯', colors: AppColors.amberGradient),
-  (emoji: '⚡', colors: AppColors.greenGradient),
-  (emoji: '🔥', colors: AppColors.amberGradient),
-  (emoji: '💎', colors: AppColors.primaryGradient),
-];
-
 class SetupAvatarStep extends StatelessWidget {
   const SetupAvatarStep({super.key});
+
+  Future<void> _pickImage(BuildContext context, ImageSource source) async {
+    PermissionStatus status;
+    if (source == ImageSource.camera) {
+      status = await Permission.camera.request();
+    } else {
+      if (Platform.isAndroid) {
+        status = await Permission.storage.request();
+      } else {
+        status = await Permission.photos.request();
+      }
+    }
+
+    if (status.isGranted || status.isLimited || !Platform.isAndroid) {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: source,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 85,
+      );
+
+      if (image != null && context.mounted) {
+        context.read<PersonaSetupBloc>().add(ImageSelected(image.path));
+      }
+    } else if (status.isPermanentlyDenied && context.mounted) {
+      openAppSettings();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PersonaSetupBloc, PersonaSetupState>(
       builder: (context, state) {
         final firstName = state.userName.trim().split(' ').first;
-        final selected = state.avatarIndex;
+        final imagePath = state.selectedImagePath;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             StepHeading(
               tag: 'STEP 2 OF 4',
-              title: 'Choose your',
+              title: 'Upload your',
               accent: 'avatar',
               subtitle: firstName.isNotEmpty
-                  ? 'Pick what represents you, $firstName.'
-                  : 'Pick what represents you.',
+                  ? 'Add a photo so we can recognize you, $firstName.'
+                  : 'Add a photo so we can recognize you.',
             ),
             const SizedBox(height: AppSpacing.xl3),
 
-            // Selected preview
+            // Image Preview
             Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                switchInCurve: Curves.easeOutCubic,
-                transitionBuilder: (child, anim) => ScaleTransition(
-                  scale: anim,
-                  child: FadeTransition(opacity: anim, child: child),
-                ),
-                child: _AvatarPreview(
-                  key: ValueKey(selected),
-                  emoji: _kAvatars[selected].emoji,
-                  colors: _kAvatars[selected].colors,
-                ),
+              child: Stack(
+                children: [
+                  Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.bg300,
+                      border: Border.all(
+                        color: AppColors.neonBlue.withValues(alpha: 0.5),
+                        width: 2,
+                      ),
+                      image: imagePath != null
+                          ? DecorationImage(
+                              image: FileImage(File(imagePath)),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: imagePath == null
+                        ? Icon(
+                            Icons.person_rounded,
+                            size: 60,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.2),
+                          )
+                        : null,
+                  ),
+                  if (imagePath != null)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: () => context.read<PersonaSetupBloc>().add(
+                          ImageSelected(''),
+                        ), // Or some way to clear
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppColors.error,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
 
-            const SizedBox(height: AppSpacing.xl2),
+            const SizedBox(height: AppSpacing.xl3),
 
-            // Grid picker
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: AppSpacing.md,
-                crossAxisSpacing: AppSpacing.md,
-                childAspectRatio: 1,
-              ),
-              itemCount: _kAvatars.length,
-              itemBuilder: (_, i) => GestureDetector(
-                onTap: () =>
-                    context.read<PersonaSetupBloc>().add(AvatarChanged(i)),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOut,
-                  decoration: BoxDecoration(
-                    color: selected == i
-                        ? AppColors.neonBlue.withOpacity(0.1)
-                        : AppColors.bg300,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(
-                      color: selected == i
-                          ? AppColors.neonBlue
-                          : AppColors.glassBorder,
-                      width: selected == i ? 1.5 : 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _kAvatars[i].emoji,
-                      style: const TextStyle(fontSize: 32),
-                    ),
+            // Pick buttons
+            Row(
+              children: [
+                Expanded(
+                  child: _PickButton(
+                    icon: Icons.camera_alt_rounded,
+                    label: 'Camera',
+                    onTap: () => _pickImage(context, ImageSource.camera),
                   ),
                 ),
-              ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _PickButton(
+                    icon: Icons.photo_library_rounded,
+                    label: 'Gallery',
+                    onTap: () => _pickImage(context, ImageSource.gallery),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -110,33 +151,41 @@ class SetupAvatarStep extends StatelessWidget {
   }
 }
 
-class _AvatarPreview extends StatelessWidget {
-  final String emoji;
-  final List<Color> colors;
+class _PickButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
-  const _AvatarPreview({super.key, required this.emoji, required this.colors});
+  const _PickButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: colors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: colors.first.withOpacity(0.35),
-            blurRadius: 28,
-            spreadRadius: 4,
-          ),
-        ],
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.neonBlue, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: AppTextStyles.labelLG.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 48))),
     );
   }
 }
